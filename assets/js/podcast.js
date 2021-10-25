@@ -7,8 +7,12 @@ var disliked;
 
     $(document).ready(function(){
         console.log(window.liked);
-        liked = JSON.parse(window.liked);
-        disliked = JSON.parse(window.disliked);
+        if(window.liked != 'None'){
+            liked = JSON.parse(window.liked);
+        }
+        if(window.disliked != 'None'){
+            disliked = JSON.parse(window.disliked);
+        }
 
 
         // First, checks if it isn't implemented yet.
