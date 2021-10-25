@@ -1,0 +1,15 @@
+body{
+    background:black;
+    color:white;
+    margin: 0;
+}
+
+.container{
+	width: 50vh;
+	height: 50vh;
+	margin: 25vh auto;
+	background: grey;
+	border: solid 1px white;
+	display: block;
+	background: red;
+}

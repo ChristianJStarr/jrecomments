@@ -1,0 +1,73 @@
+{% load static %}
+<html>
+    <head>
+        <link rel="stylesheet" href="{% static 'css/main.css' %}">
+        <script src="{% static 'js/jquery.js' %}"></script>
+        <script src="https://kit.fontawesome.com/892442ba34.js" crossorigin="anonymous"></script>
+
+
+    </head>
+    <body>
+        <div id="particles"></div>
+        <div id="wrapper">
+            <h1>JRE <span>COMMENTS</span></h1>
+            <div id="container-wrap">
+            <div id="container">
+                {% for podcast in podcasts %}
+
+                <div class="podcast" id="podcast-{{ podcast.0 }}">
+                    <div class="podcast-click"></div>
+                    <a class="id">{{ podcast.0 }}</a>
+                    <a class="name">{{ podcast.1 }} </a><span class="duration-preview">{{ podcast.2 }}</span>
+                    <i class="fa fa-close close"></i>
+                    <div class="data-bar">
+                        <a><i class="far fa-calendar-alt"></i><span>10/20/21</span></a>
+                        <a><i class="far fa-clock"></i><span>{{ podcast.2 }}</span></a>
+                        <a><i class="far fa-comment"></i><span data='hi' class="comment-total"></span></a>
+                    </div>
+                    <div class="comments-wrap">
+                        <div class="comments">
+
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <a class="comment-max-char"></a>
+                        <textarea class="comment-input" name="comment" maxlength="250" placeholder="Write a comment!" required></textarea>
+                         <input class="comment-submit" type="submit" value="">
+                         <i class="fa fa-arrow-right submit"></i>
+                    </div>
+                </div>
+            {% endfor %}
+                <div class="nickname">
+                    <div class="nickname-container">
+                        <a>ENTER A DISPLAY NAME</a>
+                        <p>No bad words in display name.</p>
+                        <input type="text" maxlength="20" placeholder="Display Name">
+                        <input type="submit" value="OK">
+                    </div>
+                </div>
+            </div>
+            </div>
+            <footer>
+                <h2>Made with <i class="fa fa-heart"></i> from Flint, MI</h2>
+                <span>BTC legacy: <a href="bitcoin:1B3FmE2jF4TdNUASqgNsS6gx4qJFJBPdzG">1B3FmE2jF4TdNUASqgNsS6gx4qJFJBPdzG</a></span>
+                <span>BTC segwit: <a href="bitcoin:bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf">bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf</a></span>
+            </footer>
+        </div>
+
+
+        <script src="{% static 'js/particles.min.js' %}"></script>
+        <script>
+            particlesJS.load('particles', '{% static 'particlesjs-config.json' %}', function() {
+                console.log('callback - particles.js config loaded');
+            });
+        </script>
+        <script type="text/javascript">
+            window.CSRF_TOKEN = "{{ csrf_token }}";
+            window.nickname = "{{ nickname }}";
+            window.liked = "{{ liked |safe}}";
+            window.disliked = "{{ disliked |safe}}";
+        </script>
+    <script src="{% static 'js/podcast.js' %}"></script>
+    </body>
+</html>
