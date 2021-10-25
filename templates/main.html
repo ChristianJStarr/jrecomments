@@ -1,11 +1,19 @@
 {% load static %}
 <html>
     <head>
+        <title>JRE Comments</title>
+        <meta name="title" content="Unofficial JRE Comment Section">
+        <meta name="description" content="With the move to spotify, there is one good thing we lost. Introducing the unofficial JRE comment section. Currently 1,259,295,299 comments in total.">
+        <meta name="keywords" content="JRE, Joe Rogan, Joe Rogan Experience, Podcast, Comment Section, Reddit, Subreddit">
+        <meta name="robots" content="index, follow">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="language" content="English">
+        <meta name="revisit-after" content="1 days">
+        <link rel="icon" href="{% static 'img/favicon/favicon.ico' %}">
+        <link rel="stylesheet" href="{% static 'css/reset.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
         <script src="{% static 'js/jquery.js' %}"></script>
         <script src="https://kit.fontawesome.com/892442ba34.js" crossorigin="anonymous"></script>
-
-
     </head>
     <body>
         <div id="particles"></div>
@@ -56,7 +64,7 @@
         </div>
 
 
-        <script src="{% static 'js/particles.min.js' %}"></script>
+        <!--<script src="{% static 'js/particles.min.js' %}"></script>-->
         <script>
             particlesJS.load('particles', '{% static 'particlesjs-config.json' %}', function() {
                 console.log('callback - particles.js config loaded');
