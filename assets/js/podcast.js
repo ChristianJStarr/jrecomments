@@ -10,8 +10,14 @@ var disliked;
         if(window.liked != 'None'){
             liked = JSON.parse(window.liked);
         }
+        else{
+            liked = [];
+        }
         if(window.disliked != 'None'){
             disliked = JSON.parse(window.disliked);
+        }
+        else{
+            disliked = [];
         }
 
 
