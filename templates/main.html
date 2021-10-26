@@ -10,7 +10,7 @@
         <meta name="language" content="English">
         <meta name="revisit-after" content="1 days">
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
-        
+
         <link rel="icon" href="{% static 'img/favicon/favicon.ico' %}">
         <link rel="stylesheet" href="{% static 'css/reset.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
@@ -24,27 +24,29 @@
             <div id="container-wrap">
             <div id="container">
                 {% for podcast in podcasts %}
-
                 <div class="podcast" id="podcast-{{ podcast.0 }}">
                     <div class="podcast-click"></div>
+
                     <a class="id">{{ podcast.0 }}</a>
-                    <a class="name">{{ podcast.1 }} </a><span class="duration-preview">{{ podcast.2 }}</span>
+                    <a class="name">{{ podcast.1 }} </a>
+                    <span class="duration-preview">{{ podcast.2 }}</span>
                     <i class="fa fa-close close"></i>
+
                     <div class="data-bar">
                         <a><i class="far fa-calendar-alt"></i><span>10/20/21</span></a>
                         <a><i class="far fa-clock"></i><span>{{ podcast.2 }}</span></a>
                         <a><i class="far fa-comment"></i><span data='hi' class="comment-total"></span></a>
                     </div>
-                    <div class="comments-wrap">
-                        <div class="comments">
 
-                        </div>
+                    <div class="comments-wrap">
+                        <div class="comments"><!-- Where the comments go!--> </div>
                     </div>
+
                     <div class="comment">
                         <a class="comment-max-char"></a>
                         <textarea class="comment-input" name="comment" maxlength="250" placeholder="Write a comment!" required></textarea>
-                         <input class="comment-submit" type="submit" value="">
-                         <i class="fa fa-arrow-right submit"></i>
+                        <input class="comment-submit" type="submit" value="">
+                        <i class="fa fa-arrow-right submit"></i>
                     </div>
                 </div>
             {% endfor %}

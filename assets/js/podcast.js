@@ -4,7 +4,6 @@ var liked;
 var disliked;
 
 
-
     $(document).ready(function(){
         console.log(window.liked);
         if(window.liked != 'None'){
@@ -37,6 +36,10 @@ var disliked;
         if(window.nickname == 'None'){
             askForNickname();
         }
+
+        //Prevent Scroll
+
+
         //Open Podcast
         $(document).on('click', '.podcast-click', function(){
             var parent = $(this).parent();
@@ -238,7 +241,7 @@ var disliked;
         podcast.children('.close').css('opacity', 1);
         opened.push(podcast);
         var comment_input = podcast.find('.comment-input');
-        comment_input.focus();
+        //comment_input.focus();
         podcast.find('.comment-max-char').text('0');
         var podcastId = podcast.attr('id').split('-')[1];
         getMasterComments(podcastId, 50, 0);
@@ -478,3 +481,5 @@ var disliked;
         }
         return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
     }
+
+    //

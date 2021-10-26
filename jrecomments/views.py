@@ -16,7 +16,7 @@ secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
 
 def index_views(request):
     ##update_podcast_library(True)
-    data = { 'podcasts': get_list_of_podcasts()[::-1][:100],
+    data = { 'podcasts': get_list_of_podcasts()[::-1],
              'nickname': request.session.get('nickname'),
              'liked': request.session.get('liked'),
              'disliked': request.session.get('disliked')}
