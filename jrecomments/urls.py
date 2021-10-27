@@ -5,11 +5,14 @@ from django.urls import path
 
 from . import views
 
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
 urlpatterns = [
     path('', views.index_views, name='index'),
     path('privacy/', views.privacy_views, name='privacy'),
     path('termsofservice/', views.terms_views, name='terms'),
-
+    path('sentry-debug/', trigger_error),
 
     # APP DATA REQUESTS
     path('data/get-all/podcasts/', views.podcasts, name='podcasts'),
