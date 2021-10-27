@@ -1,18 +1,33 @@
 {% load static %}
-<html>
+<!DOCTYPE html>
+<html lang="en-us">
     <head>
-        <title>JRE Comments</title>
-        <meta name="title" content="Unofficial JRE Comment Section">
-        <meta name="description" content="With the move to spotify, there is one good thing we lost. Introducing the unofficial JRE comment section. Currently 1,259,295,299 comments in total.">
-        <meta name="keywords" content="JRE, Joe Rogan, Joe Rogan Experience, Podcast, Comment Section, Reddit, Subreddit">
-        <meta name="robots" content="index, follow">
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="language" content="English">
         <meta name="revisit-after" content="1 days">
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+
+        <title>JRE Comments</title>
+        <meta name="title" content="Unofficial JRE Comment Section">
+        <meta name="application-name" content="JRE Comments" />
+        <meta name="description" content="With the move to spotify, there is one good thing we lost. Introducing the unofficial JRE comment section. Currently {{ total_comment_count }} comments in total.">
+        <meta name="keywords" content="JRE, Joe Rogan, Joe Rogan Experience, Podcast, Comment Section, Reddit, Subreddit">
+        <meta name="robots" content="index, follow">
+        <meta name="author" content="Christian J. Starr">
+        <link rel="shortcut icon" type="image/ico" href="{% static 'img/favicon/favicon.ico' %}" />
+
+        <meta name="HandheldFriendly" content="true">
+        <meta name="apple-mobile-web-app-title" content="JRE Comments">
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="#000" />
+        <meta name="theme-color" content="#000">
+        <meta name="screen-orientation" content="portrait">
+        <meta name="x5-orientation" content="portrait">
+
 
         <!-- CSS Styling -->
-        <link rel="icon" href="{% static 'img/favicon/favicon.ico' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
         <!-- Javascript -->

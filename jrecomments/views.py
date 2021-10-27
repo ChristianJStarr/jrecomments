@@ -19,7 +19,8 @@ urgent_expire_cache = 60 # 1 Minute
 
 def index_views(request):
     ##update_podcast_library(True)
-    data = { 'nickname': request.session.get('nickname'),
+    data = { 'total_comment_count': Comment.objects.all().count(),
+             'nickname': request.session.get('nickname'),
              'liked': request.session.get('liked'),
              'disliked': request.session.get('disliked')}
     return render(request, 'main.html', data)
