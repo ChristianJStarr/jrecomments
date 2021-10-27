@@ -32,7 +32,11 @@
                     <span class="duration-preview">{{ podcast.2 }}</span>
                     <i class="fa fa-close close"></i>
 
-                    '<div class="data-bar"><a><i class="far fa-calendar-alt"></i><span>{0}</span></a><a><i class="far fa-clock"></i><span>{1}</span></a><a><i class="far fa-comment"></i><span class="comment-total">{2}</span></a></div>'
+                    <div class="data-bar">
+                        <a><i class="far fa-calendar-alt"></i><span>10/20/21</span></a>
+                        <a><i class="far fa-clock"></i><span>{{ podcast.2 }}</span></a>
+                        <a><i class="far fa-comment"></i><span data='hi' class="comment-total"></span></a>
+                    </div>
 
                     <div class="comments-wrap">
                         <div class="comments"><!-- Where the comments go!--> </div>
@@ -41,8 +45,8 @@
                     <div class="comment">
                         <a class="comment-max-char"></a>
                         <textarea class="comment-input" name="comment" maxlength="250" placeholder="Write a comment!" required></textarea>
-                        <input class="comment-submit" type="submit" value="">
-                        <i class="fa fa-arrow-right submit"></i>
+                         <input class="comment-submit" type="submit" value="">
+                         <i class="fa fa-arrow-right submit"></i>
                     </div>
                 </div>
             {% endfor %}
