@@ -222,3 +222,5 @@ venv.bak/
 
 # End of https://www.gitignore.io/api/linux,macos,python,django,pycharm
 *.pyc
+jrecomments/__pycache__/settings.cpython-39.pyc
+*.pyc
