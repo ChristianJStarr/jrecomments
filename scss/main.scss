@@ -1,3 +1,8 @@
+/*  RESET */
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;font-size:14px;line-height:1em;font:inherit;vertical-align:center;}article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}table{border-collapse:collapse;border-spacing:0}
+/*! normalize.css v3.0.2 | MIT License | git.io/normalize */
+
+
 $color-dislike:#b8496a;
 $color-like:#8ae378;
 
@@ -16,7 +21,7 @@ body{
     font-family: helvetica;
     height: 100%; width: 100%;
     position: relative;
-    overflow: auto;
+    overflow: none;
     &::-webkit-scrollbar {
     	-webkit-appearance: none;
 	}
@@ -42,33 +47,41 @@ footer{
 	position: absolute;
 	bottom: 0;right: 0;left: 0;
 	text-align:center;
-	a{
-		display:inline-block;
-		color:grey;
-		margin:0 auto;
-		font-size:1.2vh;
-	}
-	span{
-		font-size: 1vh;
-		padding: 0.5vh 0 0 0;
-		text-align: center;
-		display: block;
-		color: lightgrey;
-		a{
-			font-size: 1vh;
-		}
-	}
+	font-size:0;
 	h2{
 		text-align: center;
 		vertical-align: top;
 		display: block;
 		margin: 0 auto;
 		color: lightgrey;
-		padding:1.5vh 0 0 0;
+		padding:1.5vh 0 0.35vh 0;
 		z-index: 2;
 		font-size: 1.5vh;
-		i{
+		.heart{
 			color: #b8496a;
+		}
+	}
+	.links{
+		display:inline-block;
+		color:grey;
+		margin:0 auto;
+		padding:0.35vh 0.35vh 0 0.35vh;
+		font-size:1.2vh;
+	}
+	#donate{
+		.wallet-address{
+			padding:0.35vh 0;
+			display:block;
+			font-size:1vh;
+			color:grey;
+			&:nth-child(1):before{
+				content:'BTC: ';
+				color:lightgrey;
+			}
+			&:nth-child(2):before{
+				content:'ETH: ';
+				color:lightgrey;
+			}
 		}
 	}
 }
@@ -773,6 +786,24 @@ input{
 	}
 }
 
+
+
+.copy-to-clipboard{
+	color:grey;
+	transition:color ease 0.5s;
+	position:relative;
+}
+.copy-notify{
+	position:absolute;
+	right:0;left:0;
+	top:0;bottom:0;
+	margin:0 auto;
+	text-align:center;
+	width:100%;
+	opacity:0;
+	color:grey;
+	transition:opacity ease 0.5s;
+}
 
 
 

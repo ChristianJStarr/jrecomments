@@ -51,6 +51,21 @@ $(document).ready(function(){
 
 
     //Open Podcast
+    $(document).on('click', '.copy-to-clipboard', function(){
+        var link = $(this);
+        var data = link.attr('address-data');
+        var notify = link.find('.copy-notify');
+
+        navigator.clipboard.writeText(data.toString());
+        link.css('color', '#000');
+        notify.css('opacity', 1);
+        setTimeout(function(){
+            link.css('color', 'grey');
+            notify.css('opacity', 0);
+        }, 1000);
+    });
+
+    //Open Podcast
     $(document).on('click', '.podcast-click', function(){
         var parent = $(this).parent();
         if (!parent.hasClass('extended')){

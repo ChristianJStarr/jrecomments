@@ -4,12 +4,18 @@ from django.http import JsonResponse
 from django.shortcuts import render
 import spotipy
 from django.utils.datastructures import MultiValueDictKeyError
+from django.views.decorators.cache import cache_page
 from spotipy.oauth2 import SpotifyClientCredentials
 import quickle
 from jrecomments.models import Podcast, Comment
 
 client_id = '9f4f9e03f82d4d469df810cdf54442e9'
 secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
+
+long_expire_cache = 48 * 60 * 60 # 48 Hours
+default_expire_cache = 2 * 60 * 60 # 2 Hours
+urgent_expire_cache = 60 # 1 Minute
+
 
 def index_views(request):
     ##update_podcast_library(True)
@@ -18,11 +24,15 @@ def index_views(request):
              'disliked': request.session.get('disliked')}
     return render(request, 'main.html', data)
 
+@cache_page(long_expire_cache)
 def privacy_views(request):
     return render(request, 'privacy.html')
+
+@cache_page(long_expire_cache)
 def terms_views(request):
     return render(request, 'terms.html')
 
+@cache_page(default_expire_cache)
 def podcasts(request):
     output = {}
     podcasts = Podcast.objects.all()
@@ -136,7 +146,7 @@ def try_int(value):
     except ValueError:
         return 0
 
-
+@cache_page(urgent_expire_cache)
 def comments(request, id, amount, offset):
     comments = dict()
     total_comments = 0
