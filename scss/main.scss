@@ -567,12 +567,9 @@ input{
 	right: 5.25vh;
 	bottom: 0.25vh;
 	color: grey;
-}
-.comment-max-char:before{
-	content: "(";
-}
-.comment-max-char:after{
-	content: "/250)";
+	&:after{
+		content: "/250";
+	}
 }
 
 
