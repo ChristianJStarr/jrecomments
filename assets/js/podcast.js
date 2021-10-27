@@ -89,6 +89,9 @@ $(document).ready(function(){
             search = $('#search-bar').val();
             if(search.length > 0){
                 updatePodcastView();
+                gtag('event','search_podcasts', {
+                    "search": search
+                });
             }
         }
     });
@@ -301,6 +304,11 @@ function turnOn(podcast){
                     console.log(error);
                 }
             });
+
+            gtag('event','comment_submit', {
+                "id": podcastId,
+                "name": podcast.attr('id').split('-')[0],
+            });
         }
     });
     $(document).on('keypress','.comment-input', function (e) {
@@ -333,6 +341,11 @@ function turnOn(podcast){
                     error: function (error){
                         console.log(error);
                     }
+                });
+
+                gtag('event','comment_submit', {
+                    "id": podcastId,
+                    "name": podcast.attr('id').split('-')[0],
                 });
             }
             //Enable the textbox again if needed.
@@ -372,6 +385,10 @@ function turnOn(podcast){
                 error: function (error){
                     console.log(error);
                 }
+            });
+
+            gtag('event','comment_like', {
+                "id": commentId
             });
         }
         else{
@@ -419,6 +436,10 @@ function turnOn(podcast){
                 error: function (error){
                     console.log(error);
                 }
+            });
+
+            gtag('event','comment_dislike', {
+                "id": commentId
             });
         }
         else{
@@ -489,8 +510,16 @@ function turnOn(podcast){
     });
     getMasterComments(podcastId, 50, 0);
     opened.push(podcast);
+
+
+    gtag('event','open_podcast', {
+        "id": podcastId,
+        "name": podcastData[1]
+    });
 }
 function turnOff(podcast){
+    var podcastId = podcast.attr('id').split('-')[1];
+    var podcastData = podcasts[podcastId];
     podcast.removeClass('extended');
     podcast.find('.duration-preview').css('opacity', 1);
     podcast.find('.close').css('opacity', 0);
@@ -499,6 +528,11 @@ function turnOff(podcast){
     setTimeout(function (){
         podcast.find('.content').text('');
     }, 500);
+
+    gtag('event','close_podcast', {
+        "id": podcastId,
+        "name": podcastData[1]
+    });
 }
 function removeFromOpened(podcast){
     if(opened.length > 0){
