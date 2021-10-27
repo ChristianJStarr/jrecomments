@@ -1,8 +1,5 @@
 import datetime
-import json
 import random
-
-from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 import spotipy
@@ -16,40 +13,66 @@ secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
 
 def index_views(request):
     ##update_podcast_library(True)
-    data = { 'podcasts': get_list_of_podcasts()[::-1][:100],
-             'nickname': request.session.get('nickname'),
+    data = { 'nickname': request.session.get('nickname'),
              'liked': request.session.get('liked'),
              'disliked': request.session.get('disliked')}
     return render(request, 'main.html', data)
 
-def get_list_of_podcasts():
-    output = []
+def privacy_views(request):
+    return render(request, 'privacy.html')
+def terms_views(request):
+    return render(request, 'terms.html')
+
+def podcasts(request):
+    output = {}
     podcasts = Podcast.objects.all()
     for podcast in podcasts:
-        output.append([podcast.id, podcast.name, podcast.duration, podcast.date])
-    return output
+        comments = podcast.comments
+        if comments != None:
+            comments = len(comments)
+        else:
+            comments = 0
+        output[podcast.id] = [podcast.id, podcast.name, podcast.duration, podcast.date, comments]
+    return JsonResponse({'podcasts': output })
 
 def update_podcast_library(fetch_all=False):
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=secret_id))
-    jre = '4rOoJ6Egrf8K2IrywzwOMk'
     offset = 0
     if not fetch_all:
         ## CHECK FOR UPDATE
-        results = sp.show_episodes(jre, limit=50, offset=offset, market='US')
+        results = sp.show_episodes('4rOoJ6Egrf8K2IrywzwOMk', limit=10, offset=offset, market='US')
         results = results['items']
         for result in results:
             name = get_podcast_name(result['name'])
             id = get_podcast_id(result['name'])
-            check = Podcast.objects.filter(id=id).first()
-            if check == None:
+            id = int(id)
+            duration_ms = result['duration_ms']
+            release_date = result['release_date']
+            podcast = Podcast.objects.filter(id=id).first()
+            if podcast == None:
                 podcast = Podcast()
-                podcast.id = id
-                podcast.name = name
-                podcast.save()
+            elif podcast.name != name:
+                if '(Part 1)' in name or '(Part 2)' in name:
+                    name.replace('(Part 1)', '')
+                    name.replace('(Part 2)', '')
+                    if podcast.duration != None and podcast.duration != '':
+                        hours = podcast.duration.split('h')[0]
+                        mins = podcast.duration.split('h')[1].replace('m', '')
+                        hours = try_int(hours)
+                        mins = try_int(mins)
+                        mins += hours * 60
+                        mins *= 60
+                        mins *= 1000
+                        duration_ms += mins
+            podcast.duration = get_podcast_duration(duration_ms)
+            podcast.id = id
+            podcast.name = name
+            podcast.date = release_date
+            podcast.save()
     else:
         ## FETCH ALL
         while True:
-            results = sp.show_episodes(jre, limit=50, offset=offset, market='US')
+            results = sp.show_episodes('4rOoJ6Egrf8K2IrywzwOMk', limit=50, offset=offset, market='US')
             offset += 50
             results = results['items']
             if len(results) == 0:
@@ -65,6 +88,8 @@ def update_podcast_library(fetch_all=False):
                     podcast = Podcast()
                 elif podcast.name != name:
                     if '(Part 1)' in name or '(Part 2)' in name:
+                        name.replace('(Part 1)', '')
+                        name.replace('(Part 2)', '')
                         if podcast.duration != None and podcast.duration != '':
                             hours = podcast.duration.split('h')[0]
                             mins = podcast.duration.split('h')[1].replace('m', '')

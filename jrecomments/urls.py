@@ -6,13 +6,20 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index_views),
+    path('', views.index_views, name='index'),
+    path('privacy/', views.privacy_views, name='privacy'),
+    path('termsofservice/', views.terms_views, name='terms'),
+
+
+    # APP DATA REQUESTS
+    path('data/get-all/podcasts/', views.podcasts, name='podcasts'),
     path('data/<id>/comments/<amount>/<offset>/', views.comments, name='comments'),
+
+    # APP ACTIONS
     path('action/comment/<id>/', views.comment, name='comment'),
     path('action/like/<id>/', views.like_comment, name='like'),
     path('action/dislike/<id>/', views.dislike_comment, name='dislike'),
     path('action/nickname/set/<nickname>/', views.set_nick, name='setnick'),
 ]
-
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
