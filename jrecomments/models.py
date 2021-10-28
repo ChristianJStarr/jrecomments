@@ -12,15 +12,22 @@ class Podcast(models.Model):
 
 class Comment(models.Model):
     podcast = models.IntegerField(default=0)
-    popularity = models.IntegerField(default=0)
     user = models.UUIDField()
     name = models.TextField(default='Unknown Name')
     name_color = models.TextField(default='(0,0,0)')
-    comment = models.TextField()
     datetime = models.DateTimeField()
+    donor = models.TextField(default='')
+
     likes = models.IntegerField(default=0)
     dislikes = models.IntegerField(default=0)
+    popularity = models.IntegerField(default=0)
+    comment = models.TextField()
+    sub_comments = models.BinaryField(default=None, null=True)
+    sub_count = models.IntegerField(default=0)
     parent_id = models.IntegerField(default=0)
-    donor = models.TextField(default='')
+
+    replyToId = models.IntegerField(default=0)
+    replyToName = models.TextField(default='Unknown Name')
+    replyToColor = models.TextField(default='(0,0,0)')
 
 

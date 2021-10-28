@@ -7,6 +7,8 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.cache import cache_page
 from spotipy.oauth2 import SpotifyClientCredentials
 import quickle
+
+from jrecomments.comment import create_comment
 from jrecomments.models import Podcast, Comment
 
 client_id = '9f4f9e03f82d4d469df810cdf54442e9'
@@ -148,7 +150,7 @@ def try_int(value):
         return 0
 
 @cache_page(urgent_expire_cache)
-def comments(request, id, amount, offset):
+def comments_master(request, id, amount, offset):
     comments = dict()
     total_comments = 0
     podcast = Podcast.objects.filter(id=id).first()
@@ -160,8 +162,19 @@ def comments(request, id, amount, offset):
             for comment_id in comment_ids:
                 comment = Comment.objects.filter(id=comment_id, podcast=id, parent_id=0).first()
                 if comment != None:
-                    comments[comment_id] = (comment_to_list(comment))
+                    comments[comment_id] = comment_to_list(comment)
     return JsonResponse({'comments_total': total_comments, 'comments': comments})
+
+@cache_page(urgent_expire_cache)
+def comments_sub(request, id, amount, offset):
+    comments = dict()
+    total_comments = 0
+    data = Comment.objects.filter(parent_id=id)[int(offset):int(amount)]
+    if data != None:
+        for comment in data:
+            comments[comment.id] = comment_to_list(comment)
+    return JsonResponse({'comments_total': total_comments, 'comments': comments})
+
 
 def comment_to_list(comment):
     return {'id':comment.id,
@@ -170,6 +183,10 @@ def comment_to_list(comment):
             'donor': comment.donor,
             'comment':comment.comment,
             'podcast': comment.podcast,
+            'master': comment.parent_id,
+            'replyToId': comment.replyToId,
+            'replyToName': comment.replyToName,
+            'replyToColor': comment.replyToColor,
             'user': comment.user,
             'datetime': comment.datetime,
             'likes': comment.likes,
@@ -182,47 +199,17 @@ def random_color():
     b = random.randrange(min_color, 255)
     return '(' + str(r) + ',' + str(g) + ',' + str(b) + ')'
 
-def comment(request, id):
-    response = 500
-    comment_id = 0
-    if request.method == 'POST' or True:
-        podcast = Podcast.objects.filter(id=id).first()
-        nickname = request.session.get('nickname')
-        color = request.session.get('nameColor')
-        if color == None:
-            color = random_color()
-            request.session['nameColor'] = color
-        if podcast != None and nickname != None:
-            comment_data = ''
-            try:
-                comment_data = request.POST['comment']
-            except MultiValueDictKeyError:
-                return JsonResponse({'response': response, 'commentId': comment_id})
-            if comment_data != None and len(comment_data) > 2:
-                comment = Comment()
-                comment.comment = comment_data
-                comment.podcast = id
-                comment.user = 0
-                comment.name = nickname
-                comment.name_color = color
-                comment.datetime = datetime.datetime.now()
-                comment.save()
-                comment_id = comment.id
-                response = 200
-
-                comment_data = podcast.comments
-                comment_ids = []
-                if comment_data != None:
-                    comment_ids = quickle.loads(comment_data)
-                comment_ids.append(comment_id)
-                podcast.comments = quickle.dumps(comment_ids)
-                podcast.save()
-        elif nickname == None:
-            response = 502
-        elif podcast == None:
-            response = 503
-
-    return JsonResponse({'response': response, 'commentId': comment_id})
+def comment(request, id, parent_id=0, reply_to_id=0):
+    if request.method == 'POST':
+        name = request.session.get('nickname')
+        try:
+            comment_text = request.POST['comment']
+        except MultiValueDictKeyError:
+            return JsonResponse({'status': 'failed', 'reason': 'Invalid Comment Data.'})
+        response = create_comment(id, name, comment_text, parent_id=parent_id, reply_to_id=reply_to_id)
+        return JsonResponse(response)
+    else:
+        return JsonResponse({'status': 'failed', 'reason': 'POST Required.'})
 
 def add_to_id_list(podcast_id, comment_id):
     podcast = Podcast.objects.filter(id=podcast_id).first()

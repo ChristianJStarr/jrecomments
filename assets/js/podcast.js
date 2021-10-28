@@ -3,6 +3,7 @@ var max_podcasts_initial = 100;
 var max_podcasts_loadin = 50;
 var opened = [];
 var podcasts = {};
+var comment_cache = {};
 var liked;
 var disliked;
 
@@ -18,6 +19,62 @@ var clearAwayObjects = 100;
 var clearing = false;
 
 var currentSearch = '';
+
+
+var currentReplyId = 0;
+
+
+
+var sub_comment_template = '<div class="com-sub" id="{0}" podcastId="{7}" masterId="{8}" replyToId="{9}">' +
+    '<a class="com-text">' +
+    '<i class="com-name-wrap"><i class="fa fa-heart com-donor {1}"></i>' +
+    '<span class="com-name" style="color:rgb{2};">{3}</span>' +
+    '<i class="fa fa-karat-right"></i>' +
+    '<span class="com-name" style="color:rgb{11};">{10}</span></i>' +
+    '{4}</a>' +
+    '<div class="com-bar">' +
+    '<a class="com-dislike"><i class="fa fa-arrow-down"></i></a>' +
+    '<a class="com-points">{5}</a>' +
+    '<a class="com-like"><i class="fa fa-arrow-up"></i></a>' +
+    '<a class="com-comment"><i class="far fa-comment"></i>{6}</a>' +
+    '<a class="com-reply"><i class="fas fa-reply"></i>Reply</a>' +
+    '</div></div>';
+
+var comment_template = '<div class="com" id="{0}" podcastId="{7}">' +
+    '<a class="com-text">' +
+    '<i class="com-name-wrap"><i class="fa fa-heart com-donor {1}"></i>' +
+    '<span class="com-name" style="color:rgb{2};">{3}</span></i>' +
+    '{4}</a>' +
+    '<div class="com-bar">' +
+    '<a class="com-dislike"><i class="fa fa-arrow-down"></i></a>' +
+    '<a class="com-points">{5}</a>' +
+    '<a class="com-like"><i class="fa fa-arrow-up"></i></a>' +
+    '<a class="com-comment"><i class="far fa-comment"></i>{6}</a>' +
+    '<a class="com-reply"><i class="fas fa-reply"></i>Reply</a>' +
+    '</div><div class="com-subs"></div></div>';
+
+
+var dataBar = '<div class="data-bar"><a><i class="far fa-calendar-alt"></i><span>{0}</span></a>' +
+    '<a><i class="far fa-clock"></i><span>{1}</span></a>' +
+    '<a><i class="fa fa-arrow-up"></i><span class="comment-total">{2}</span></a>' +
+    '<a><i class="far fa-comment"></i><span class="comment-total">{3}</span></a></div>';
+
+var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments no-scroll-bar-com"></div></div>';
+
+var commentInputTemplate = '<div class="comment"><a class="comment-max-char"></a>' +
+    '<div class="comment-input" contenteditable="true" name="comment" maxlength="250" placeholder="Write a comment!" required></div>' +
+    '<input class="comment-submit" type="submit" value="">' +
+    '<i class="fa fa-arrow-right submit"></i></div>';
+
+
+
+
+
+
+
+
+
+
 
 $(document).ready(function(){
     // First, checks if it isn't implemented yet.
@@ -48,7 +105,7 @@ $(document).ready(function(){
     else{
         disliked = [];
     }
-
+    registerPodcastEvents();
 
     //Open Podcast
     $(document).on('click', '.copy-to-clipboard', function(){
@@ -272,203 +329,7 @@ function turnOn(podcast){
     }
     scrollTo(podcast, removal);
 
-    // Check and Ask for Nickname
-    $(document).on('click', '.comment-input', function(){
-        if(window.nickname == 'None'){
-            askForNickname();
-        }
-    });
 
-    //Submit Comment
-    $(document).on('click', '.comment-submit', function(){
-        if(window.nickname == 'None'){
-            askForNickname();
-            return
-        }
-        var podcast = $(this).parent().parent().parent();
-        if(podcast == null){return}
-        var podcastId = podcast.attr('id').split('-')[1];
-        var comment_input = podcast.find('.comment-input');
-        var comment_text = comment_input.val();
-        var user_id = 0;
-        if(comment_text.length > 2){
-            var pageUrl = '/action/comment/' + podcastId + '/';
-            $.ajax({
-                type: 'POST',
-                url: pageUrl,
-                data: { comment: comment_text, user_id: user_id, csrfmiddlewaretoken: window.CSRF_TOKEN },
-                dataType: 'json',
-                success: function (data) {
-                    var commentId = data.commentId;
-                    var code = data.response;
-
-                    //Code 500 - No Comment Received
-                    //Code 502 - No Nickname Set
-                    //Code 503 - Podcast not Found
-                    if(code == 500){}
-                    else if(code == 502){
-                        askForNickname();
-                    }
-                    else if(code == 503){}
-
-                    podcast.find('.comment-input').val('');
-                    getMasterComments(podcastId, 50, 0);
-                    comment_input.focus();
-                },
-                error: function (error){
-                    console.log(error);
-                }
-            });
-
-            gtag('event','comment_submit', {
-                "id": podcastId,
-                "name": podcast.attr('id').split('-')[0],
-            });
-        }
-    });
-    $(document).on('keypress','.comment-input', function (e) {
-        if(e.which === 13 && !e.shiftKey){
-            if(window.nickname == 'None'){
-                askForNickname();
-                return
-            }
-            //Disable textbox to prevent multiple submit
-            $(this).attr("disabled", "disabled");
-            var podcast = $(this).parent().parent();
-            var podcastId = podcast.attr('id').split('-')[1];
-            var comment_input = podcast.find('.comment-input');
-            var comment_text = comment_input.val();
-            var user_id = 0;
-            if(comment_text.length > 2){
-                var pageUrl = '/action/comment/' + podcastId + '/';
-                $.ajax({
-                    type: 'POST',
-                    url: pageUrl,
-                    data: { comment: comment_text, user_id: user_id, csrfmiddlewaretoken: window.CSRF_TOKEN },
-                    dataType: 'json',
-                    success: function (data) {
-                        var commentId = data.commentId;
-                        var code = data.response;
-                        podcast.find('.comment-input').val('');
-                        getMasterComments(podcastId, 50, 0);
-                        comment_input.focus();
-                    },
-                    error: function (error){
-                        console.log(error);
-                    }
-                });
-
-                gtag('event','comment_submit', {
-                    "id": podcastId,
-                    "name": podcast.attr('id').split('-')[0],
-                });
-            }
-            //Enable the textbox again if needed.
-            $(this).removeAttr("disabled");
-        }
-    });
-
-    //Like Comment
-    $(document).on('click', '.com-like', function(){
-        var comment = $(this).parent().parent();
-        var commentId = comment.attr('id');
-        var pageUrl = '/action/like/' + commentId + '/';
-        if(!hasLiked(commentId)){
-            wasDisliked = false;
-            if(hasDisliked(commentId)){
-                removeDislikeComment(commentId);
-                wasDisliked = true;
-            }
-            $.ajax({
-                type: 'GET',
-                url: pageUrl,
-                dataType: 'json',
-                success: function (data) {
-                    liked.push(commentId);
-                    updateComment(commentId);
-                    var points = comment.find('.com-points').text();
-                    if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
-                    }else{
-                        points = parseInt(points);
-                        points += 1;
-                        if(wasDisliked){
-                            points += 1;
-                        }
-                        comment.find('.com-points').text(nFormatter(points, 1));
-                    }
-                },
-                error: function (error){
-                    console.log(error);
-                }
-            });
-
-            gtag('event','comment_like', {
-                "id": commentId
-            });
-        }
-        else{
-            removeLikeComment(commentId);
-            updateComment(commentId);
-            var points = comment.find('.com-points').text();
-            if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
-            }else{
-                points = parseInt(points);
-                points -= 1;
-                comment.find('.com-points').text(nFormatter(points, 1));
-            }
-        }
-    });
-
-    //Disike Comment
-    $(document).on('click', '.com-dislike', function(){
-        var comment = $(this).parent().parent();
-        var commentId = comment.attr('id');
-        var pageUrl = '/action/dislike/' + commentId + '/';
-        if(!hasDisliked(commentId)){
-            wasLiked = false;
-            if(hasLiked(commentId)) {
-                removeLikeComment(commentId);
-                wasLiked = true;
-            }
-            $.ajax({
-                type: 'GET',
-                url: pageUrl,
-                dataType: 'json',
-                success: function (data) {
-                    disliked.push(commentId);
-                    updateComment(commentId);
-                    var points = comment.find('.com-points').text();
-                    if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
-                    }else{
-                        points = parseInt(points);
-                        points -= 1;
-                        if(wasLiked){
-                            points -= 1;
-                        }
-                        comment.find('.com-points').text(nFormatter(points, 1));
-                    }
-                },
-                error: function (error){
-                    console.log(error);
-                }
-            });
-
-            gtag('event','comment_dislike', {
-                "id": commentId
-            });
-        }
-        else{
-            removeDislikeComment(commentId);
-            updateComment(commentId);
-            var points = comment.find('.com-points').text();
-            if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
-            }else{
-                points = parseInt(points);
-                points += 1;
-                comment.find('.com-points').text(nFormatter(points, 1));
-            }
-        }
-    });
 
     // SET CONTENT
     content.text('');
@@ -476,20 +337,13 @@ function turnOn(podcast){
     // Create Data Bar
     var date = new Date(podcastData[3]);
     date = date.getMonth() + '/' + date.getDay() + '/' + date.getFullYear().toString().substr(2);
-    var dataBar = '<div class="data-bar"><a><i class="far fa-calendar-alt"></i><span>{0}</span></a>' +
-        '<a><i class="far fa-clock"></i><span>{1}</span></a>' +
-        '<a><i class="far fa-comment"></i><span class="comment-total">{2}</span></a></div>';
-    content.append(dataBar.format(date, podcastData[2], podcastData[4]));
+
+    content.append(dataBar.format(date, podcastData[2], podcastData[5], podcastData[4]));
 
     // Create Comment Wrap
-    var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments"></div></div>';
     content.append(commentsWrapTemplate);
 
     // Create Comment Input
-    var commentInputTemplate = '<div class="comment"><a class="comment-max-char"></a>' +
-        '<textarea class="comment-input" name="comment" maxlength="250" placeholder="Write a comment!" required></textarea>' +
-        '<input class="comment-submit" type="submit" value="">' +
-        '<i class="fa fa-arrow-right submit"></i></div>';
     content.append(commentInputTemplate);
 
     podcast.addClass('extended');
@@ -523,7 +377,7 @@ function turnOn(podcast){
             }
         }
     });
-    getMasterComments(podcastId, 50, 0);
+    getCommentsMaster(podcastId, 50, 0);
     opened.push(podcast);
 
 
@@ -632,43 +486,91 @@ function askForNickname(){
 
 
 // COMMENT UPDATING
-function getMasterComments(podcastId, amount, offset){
-    var pageUrl = '/data/' + podcastId + '/comments/' + amount + '/' + offset + '/';
+function getCommentsMaster(podcastId, amount, offset){
+    var pageUrl = '/data/master/' + podcastId + '/comments/' + amount + '/' + offset + '/';
     var comments = []
     $.ajax({
         type: 'GET',
         url: pageUrl,
         dataType: 'json',
         success: function (data) {
-
-            updateCommentDisplay(podcastId,data.comments, data.comments_total);
+            updateCommentDisplay(podcastId,data.comments, data.comments_total, false);
         },
         error: function (error){
             console.log(error);
         }
     });
 }
-function updateCommentDisplay(podcastId, comments, total_comments){
-    var podcast = $('#podcast-' + podcastId);
-    var databar = podcast.find('.data-bar');
-    var commentSection = podcast.find('.comments');
+function getCommentsSub(commentId, amount, offset){
+    var pageUrl = '/data/sub/' + commentId + '/comments/' + amount + '/' + offset + '/';
+    var comments = []
+    $.ajax({
+        type: 'GET',
+        url: pageUrl,
+        dataType: 'json',
+        success: function (data) {
+            updateCommentDisplay(commentId,data.comments, data.comments_total, true);
+        },
+        error: function (error){
+            console.log(error);
+        }
+    });
+}
 
+function updateCommentDisplay(id, comments, total_comments, subComment=false){
+    var podcastId,podcast;
+    var masterId,master,replyToId;
+    var commentSection;
+    var ready = false;
+    if(subComment){
+        masterId = id;
+        master = $('#' + id);
+        if(master != null){
+            commentSection = master.find('.com-subs');
+            podcastId = master.attr('podcastId');
+            if(podcastId != null){
+                podcast = $('#podcast-' + podcastId);
+                if(podcast != null){
+                    ready = true;
+                }
+            }
+        }
+    }else{
+        podcastId = id;
+        podcast = $('#podcast-' + podcastId);
+        if(podcast != null){
+            commentSection = podcast.find('.comments')
+            ready = true;
+        }
+    }
+    if(!ready){
+        return;
+    }
+
+    var databar = podcast.find('.data-bar');
     commentSection.text('');
+
     $.each(comments, function(index, comment){
-        var comment_template = '<div class="com" id="{0}">' +
-            '<a class="com-text">' +
-            '<i class="com-name-wrap"><i class="fa fa-heart com-donor {1}"></i>' +
-            '<span class="com-name" style="color:rgb{2};">{3}</span></i>' +
-            '{4}</a>' +
-            '<div class="com-bar">' +
-            '<a class="com-dislike"><i class="fa fa-arrow-down"></i></a>' +
-            '<a class="com-points">{5}</a>' +
-            '<a class="com-like"><i class="fa fa-arrow-up"></i></a>' +
-            '<a class="com-comment"><i class="far fa-comment"></i>{6}</a>' +
-            '</div></div>';
-        comment_template = comment_template.format(comment.id, comment.donor, comment.nameColor, comment.name, comment.comment, nFormatter(comment.likes - comment.dislikes, 1), 0)
-        commentSection.append(comment_template);
-        updateComment(comment.id);
+        if(subComment){
+            commentSection.append(sub_comment_template.format(comment.id,
+                comment.donor,
+                comment.nameColor,
+                comment.name,
+                comment.comment,
+                nFormatter(comment.likes - comment.dislikes, 1),
+                0, comment.podcast, comment.master, replyToId, replyToName, replyToColor));
+            updateComment(comment.id);
+        }
+        else{
+            commentSection.append( comment_template.format(comment.id,
+                comment.donor,
+                comment.nameColor,
+                comment.name,
+                comment.comment,
+                nFormatter(comment.likes - comment.dislikes, 1),
+                0, podcastId));
+            updateComment(comment.id);
+        }
     });
     databar.find('a span.comment-total').text(nFormatter(total_comments, 1));
 }
@@ -728,6 +630,40 @@ function updateComment(id){
     }
 }
 
+// COMMENT - Actions
+function submitComment(podcastId, userId, commentText, parentId=0, replyToId=0){
+    if(commenText.length > 1){
+        var subComment = false;
+        if(parentId != 0){subComment = true;}
+        var pageUrl = '/action/comment/' + podcastId + '/' + parentId + '/' + replyToId;
+        $.ajax({
+            type: 'POST',
+            url: pageUrl,
+            data: { comment: comment_text, user_id: user_id, csrfmiddlewaretoken: window.CSRF_TOKEN },
+            dataType: 'json',
+            success: function (data) {
+                var status = data.status;
+                var reason = data.reason;
+                if(status == 'success'){
+                    podcast.find('.comment-input').val('');
+                }
+                else{
+                    console.log('Submmit Comment Failed: ' + reason);
+                }
+                getMasterComments(podcastId, 50, 0);
+            },
+            error: function (error){
+                console.log(error);
+            }
+        });
+
+        gtag('event','comment_submit', {
+            "id": podcastId,
+            "name": podcast.attr('id').split('-')[0],
+        });
+    }
+}
+
 
 // ADDITIONAL
 function nFormatter(num, digits) {
@@ -750,4 +686,230 @@ function nFormatter(num, digits) {
     return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
 }
 
-//
+// REGISTER PODCAST EVENTS
+function registerPodcastEvents(){
+    // Check and Ask for Nickname
+    $(document).on('click', '.comment-input', function(){
+        if(window.nickname == 'None'){
+            askForNickname();
+        }
+    });
+
+    //Submit Comment
+    $(document).on('click', '.comment-submit', function(){
+        if(window.nickname == 'None'){
+            askForNickname();
+            return
+        }
+        var podcast = $(this).parent().parent().parent();
+        if(podcast == null){return}
+        var podcastId = podcast.attr('id').split('-')[1];
+        var comment_input = podcast.find('.comment-input');
+        var comment_text = comment_input.val();
+        var user_id = 0;
+        if(comment_text.length > 2){
+            var pageUrl = '/action/comment/' + podcastId + '/';
+            $.ajax({
+                type: 'POST',
+                url: pageUrl,
+                data: { comment: comment_text, user_id: user_id, csrfmiddlewaretoken: window.CSRF_TOKEN },
+                dataType: 'json',
+                success: function (data) {
+                    var commentId = data.commentId;
+                    var code = data.response;
+
+                    //Code 500 - No Comment Received
+                    //Code 502 - No Nickname Set
+                    //Code 503 - Podcast not Found
+                    if(code == 500){}
+                    else if(code == 502){
+                        askForNickname();
+                    }
+                    else if(code == 503){}
+
+                    podcast.find('.comment-input').val('');
+                    getMasterComments(podcastId, 50, 0);
+                    comment_input.focus();
+                },
+                error: function (error){
+                    console.log(error);
+                }
+            });
+
+            gtag('event','comment_submit', {
+                "id": podcastId,
+                "name": podcast.attr('id').split('-')[0],
+            });
+        }
+    });
+    $(document).on('keypress','.comment-input', function (e) {
+        if(e.which === 13 && !e.shiftKey){
+            if(window.nickname == 'None'){
+                askForNickname();
+                return
+            }
+            //Disable textbox to prevent multiple submit
+            $(this).attr("disabled", "disabled");
+            var podcast = $(this).parent().parent();
+            var podcastId = podcast.attr('id').split('-')[1];
+            var comment_input = podcast.find('.comment-input');
+            var comment_text = comment_input.val();
+            var user_id = 0;
+
+            //Enable the textbox again if needed.
+            $(this).removeAttr("disabled");
+        }
+    });
+    $(document).on('keydown', '.comment-input', function(){
+        var commentInput = $(this);
+        setTimeout(function(){
+            if(commentInput.find('.pop').length == 0){
+                currentReplyId = 0;
+            }
+        }, 500);
+    });
+    $(document).on('click', '.pop i', function(){
+        $(this).parent().remove();
+        currentReplyId = 0;
+    });
+
+
+    //Like Comment
+    $(document).on('click', '.com-like', function(){
+        var comment = $(this).parent().parent();
+        var commentId = comment.attr('id');
+        var pageUrl = '/action/like/' + commentId + '/';
+        if(!hasLiked(commentId)){
+            wasDisliked = false;
+            if(hasDisliked(commentId)){
+                removeDislikeComment(commentId);
+                wasDisliked = true;
+            }
+            $.ajax({
+                type: 'GET',
+                url: pageUrl,
+                dataType: 'json',
+                success: function (data) {
+                    liked.push(commentId);
+                    updateComment(commentId);
+                    var points = comment.find('.com-points').text();
+                    if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
+                    }else{
+                        points = parseInt(points);
+                        points += 1;
+                        if(wasDisliked){
+                            points += 1;
+                        }
+                        comment.find('.com-points').text(nFormatter(points, 1));
+                    }
+                },
+                error: function (error){
+                    console.log(error);
+                }
+            });
+
+            gtag('event','comment_like', {
+                "id": commentId
+            });
+        }
+        else{
+            removeLikeComment(commentId);
+            updateComment(commentId);
+            var points = comment.find('.com-points').text();
+            if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
+            }else{
+                points = parseInt(points);
+                points -= 1;
+                comment.find('.com-points').text(nFormatter(points, 1));
+            }
+        }
+    });
+
+    //Disike Comment
+    $(document).on('click', '.com-dislike', function(){
+        var comment = $(this).parent().parent();
+        var commentId = comment.attr('id');
+        var pageUrl = '/action/dislike/' + commentId + '/';
+        if(!hasDisliked(commentId)){
+            wasLiked = false;
+            if(hasLiked(commentId)) {
+                removeLikeComment(commentId);
+                wasLiked = true;
+            }
+            $.ajax({
+                type: 'GET',
+                url: pageUrl,
+                dataType: 'json',
+                success: function (data) {
+                    disliked.push(commentId);
+                    updateComment(commentId);
+                    var points = comment.find('.com-points').text();
+                    if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
+                    }else{
+                        points = parseInt(points);
+                        points -= 1;
+                        if(wasLiked){
+                            points -= 1;
+                        }
+                        comment.find('.com-points').text(nFormatter(points, 1));
+                    }
+                },
+                error: function (error){
+                    console.log(error);
+                }
+            });
+
+            gtag('event','comment_dislike', {
+                "id": commentId
+            });
+        }
+        else{
+            removeDislikeComment(commentId);
+            updateComment(commentId);
+            var points = comment.find('.com-points').text();
+            if(points.indexOf('k') > -1 || points.indexOf('m') > -1) {
+            }else{
+                points = parseInt(points);
+                points += 1;
+                comment.find('.com-points').text(nFormatter(points, 1));
+            }
+        }
+    });
+
+    //Set Reply
+    $(document).on('click', '.com-comment, .com-reply', function(){
+       var comment = $(this).parent().parent();
+       if(comment != null){
+           var commentId = comment.attr('commentId');
+           var podcastId = comment.attr('podcastId');
+           var name = comment.find('.com-name').text();
+           currentReplyId = commentId;
+           setInputPop(podcastId, name)
+       }
+    });
+
+}
+
+
+function setInputPop(podcastId, name){
+    var popTemplate = '<span class="pop" contenteditable="false"><i class="fa fa-close"></i>{0}</span>&nbsp;';
+    var commentInput = $('#podcast-' + podcastId).find('.comment-input');
+    if(commentInput != null){
+        var check = commentInput.find('.pop');
+        if(check != null){
+            check.remove();
+        }
+        commentInput.text('');
+        commentInput.append(popTemplate.format(name));
+    }
+}
+
+function clearInputPop(podcastId){
+    var commentInput = $('#podcast-' + podcastId).find('.comment-input');
+    if(commentInput != null) {
+        var check = commentInput.find('.pop');
+        if (check != null) {
+            check.remove();
+        }
+    }
+}
