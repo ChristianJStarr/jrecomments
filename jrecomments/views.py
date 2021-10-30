@@ -286,3 +286,5 @@ def session_dislike(request, id):
         request.session['liked'] = new_liked
 
 
+def dan(request):
+    return render(request, 'yeah.html', {"idk": None})

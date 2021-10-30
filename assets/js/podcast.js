@@ -650,6 +650,12 @@ function submitComment(podcastId, userId, commentText, parentId=0, replyToId=0){
                 else{
                     console.log('Submmit Comment Failed: ' + reason);
                 }
+                if(subComment){
+
+                }
+                else{
+
+                }
                 getMasterComments(podcastId, 50, 0);
             },
             error: function (error){
