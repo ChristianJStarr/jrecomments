@@ -285,7 +285,3 @@ def session_dislike(request, id):
                 new_liked.append(comment_id)
         request.session['liked'] = new_liked
 
-
-def dan(request):
-    file =
-    return FileResponse()
