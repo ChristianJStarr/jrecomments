@@ -1,6 +1,6 @@
 import datetime
 import random
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.shortcuts import render
 import spotipy
 from django.utils.datastructures import MultiValueDictKeyError
@@ -287,4 +287,5 @@ def session_dislike(request, id):
 
 
 def dan(request):
-    return render(request, 'yeah.html', {"idk": None})
+    file =
+    return FileResponse()
