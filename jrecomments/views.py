@@ -25,7 +25,7 @@ urgent_expire_cache = 60 # 1 Minute
 simulated_delay = 0.25
 
 def index_views(request):
-    youtube_pull_comments()
+    #youtube_pull_comments()
     #check_bad_comments()
     #update_podcast_library(True)
     #Comment.objects.all().delete()
