@@ -16,6 +16,7 @@ urlpatterns = [
 
     # APP DATA REQUESTS
     path('data/get-all/podcasts/', views.podcasts, name='podcasts'),
+    path('data/get-specific/podcast/<id>/', views.podcast, name='podcast'),
     path('data/master/<id>/comments/<amount>/<offset>/', views.comments_master, name='comments'),
     path('data/sub/<id>/comments/<amount>/<offset>/', views.comments_sub, name='comments'),
 

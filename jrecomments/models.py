@@ -8,11 +8,13 @@ class Podcast(models.Model):
     comments = models.BinaryField(default=None, null=True)
     date = models.DateField(null=True)
     duration = models.TextField(default='0h0m', null=True)
+    score = models.IntegerField(default=0)
+    popularity = models.IntegerField(default=0)
 
 
 class Comment(models.Model):
     podcast = models.IntegerField(default=0)
-    user = models.UUIDField()
+    user = models.UUIDField(null=True, default=None)
     name = models.TextField(default='Unknown Name')
     name_color = models.TextField(default='(0,0,0)')
     datetime = models.DateTimeField()

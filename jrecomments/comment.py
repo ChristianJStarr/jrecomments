@@ -1,14 +1,31 @@
 import datetime
 import random
-
+import re
+import uuid
+import quickle
 from jrecomments.models import Podcast, Comment
 
 
 def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
-    ## FILTER COMMENT
-    if len(comment_text) < 2:
-         return {'status': 'failed', 'reason': 'Invalid Comment Given.'}
 
+    parent_id = try_int(parent_id)
+    reply_to_id = try_int(reply_to_id)
+
+    ## FILTER COMMENT
+    comment_good = True
+     #check length
+    if comment_good and len(comment_text) < 2:
+        comment_good = False
+     #check bad char
+    if comment_good:
+        re1 = re.compile(r"[<>/{}[\]~`]");
+        if re1.search(comment_text):
+            comment_good = False
+
+    if not comment_good:
+         return {'status': 'failed', 'reason': 'Comment Failed Filters.'}
+
+    parent = None
     podcast = Podcast.objects.filter(id=podcast_id).first()
     if parent_id != 0:
         parent = Comment.objects.filter(id=parent_id).first()
@@ -19,19 +36,26 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
         comment.name = name
         comment.comment = comment_text
         comment.parent_id = parent_id
-        comment.datetime = datetime.datetime.now()
+        comment.datetime = datetime.datetime.utcnow()
         comment.podcast = podcast_id
         comment.popularity = 1 + random.randrange(0, 100)
         comment.likes += 1
+        reply_to = None
         if parent_id != 0:
+            parent.sub_count += 1
+            parent.save()
             comment.replyToId = reply_to_id
             if reply_to_id != 0 and comment.replyToId != parent_id:
                 reply_to = Comment.objects.filter(id=reply_to_id).first()
                 if reply_to != None:
                     comment.replyToName = reply_to.name
+                    reply_to.sub_count += 1
+                    reply_to.save()
                 else:
                     return {'status':'failed', 'reason': 'ReplyToId Invalid.'}
         comment.save()
+
+        print('comment has been saved ' + str(comment.podcast))
 
         pod_data = podcast.comments
         comment_ids = []
@@ -76,3 +100,32 @@ def remove_from_sub_comment_cache(comment, comment_id):
             comment.sub_count -= 1
         comment.sub_comments = quickle.dumps(new_ids)
         comment.save()
+
+def check_bad_comments():
+    comments = Comment.objects.all()
+    bad_comments = 0
+    for comment in comments:
+        comment_good = True
+        # check length
+        if comment_good and len(comment.comment) < 2:
+            comment_good = False
+        # check bad char
+        if comment_good:
+            re1 = re.compile(r"[<>/{}[\]~`]");
+            if re1.search(comment.comment):
+                comment_good = False
+
+        if not comment_good and comment.sub_count > 0:
+            comment.comment = 'comment removed'
+            comment.save()
+            bad_comments += 1
+        elif not comment_good and comment.sub_count == 0:
+            comment.delete()
+    print('Removed ' + str(bad_comments) + ' Bad Comments.')
+
+def try_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return 0
+

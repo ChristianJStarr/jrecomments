@@ -1,6 +1,8 @@
 import datetime
 import random
-from django.http import JsonResponse, FileResponse
+from time import sleep
+
+from django.http import JsonResponse, FileResponse, Http404
 from django.shortcuts import render
 import spotipy
 from django.utils.datastructures import MultiValueDictKeyError
@@ -8,19 +10,26 @@ from django.views.decorators.cache import cache_page
 from spotipy.oauth2 import SpotifyClientCredentials
 import quickle
 
-from jrecomments.comment import create_comment
+from jrecomments.comment import create_comment, check_bad_comments
 from jrecomments.models import Podcast, Comment
+from jrecomments.youtube import video_comments, youtube_pull_comments
 
 client_id = '9f4f9e03f82d4d469df810cdf54442e9'
 secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
 
 long_expire_cache = 48 * 60 * 60 # 48 Hours
 default_expire_cache = 2 * 60 * 60 # 2 Hours
+auto_update_expire = 15
 urgent_expire_cache = 60 # 1 Minute
 
+simulated_delay = 0.25
 
 def index_views(request):
-    ##update_podcast_library(True)
+    youtube_pull_comments()
+    #check_bad_comments()
+    #update_podcast_library(True)
+    #Comment.objects.all().delete()
+    #popularityCheck()
     data = { 'total_comment_count': Comment.objects.all().count(),
              'nickname': request.session.get('nickname'),
              'liked': request.session.get('liked'),
@@ -35,22 +44,56 @@ def privacy_views(request):
 def terms_views(request):
     return render(request, 'terms.html')
 
-@cache_page(default_expire_cache)
+#@cache_page(default_expire_cache)
 def podcasts(request):
+    sleep(simulated_delay)
     output = {}
     podcasts = Podcast.objects.all()
     for podcast in podcasts:
-        comments = podcast.comments
-        if comments != None:
-            comments = len(comments)
-        else:
-            comments = 0
-        output[podcast.id] = [podcast.id, podcast.name, podcast.duration, podcast.date, comments]
+        if podcast != None:
+            output[podcast.id] = podcast_to_list(podcast)
     return JsonResponse({'podcasts': output })
+
+@cache_page(auto_update_expire)
+def podcast(request, id):
+    sleep(simulated_delay)
+    comments = 0
+    likes = 0
+    podcast = Podcast.objects.filter(id=id).first()
+    if podcast != None and podcast.comments != None:
+        comment_ids = quickle.loads(podcast.comments)
+        total_comments = len(comment_ids)
+        if comment_ids != None and total_comments > 0:
+            for comment_id in comment_ids:
+                comment = Comment.objects.filter(id=comment_id, podcast=id).first()
+                if comment != None:
+                    likes += comment.likes
+        podcast.score = likes
+        podcast.popularity = likes + (total_comments / 2)
+        podcast.save()
+        return JsonResponse({'podcast': podcast_to_list(podcast, total_comments) })
+    return Http404()
+
+
+def podcast_to_list(podcast, total_comments=None):
+    if total_comments == None and podcast.comments != None:
+        comment_ids = quickle.loads(podcast.comments)
+        total_comments = len(comment_ids)
+    if total_comments == None:
+        total_comments = 0
+
+    return {'id':podcast.id,
+            'name':podcast.name,
+            'duration':podcast.duration,
+            'date':podcast.date,
+            'comments':total_comments,
+            'score':podcast.score,
+            'popularity':podcast.popularity}
 
 def update_podcast_library(fetch_all=False):
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=secret_id))
     offset = 0
+    print('Updating Podcast Library - Fetch All: ')
     if not fetch_all:
         ## CHECK FOR UPDATE
         results = sp.show_episodes('4rOoJ6Egrf8K2IrywzwOMk', limit=10, offset=offset, market='US')
@@ -149,8 +192,27 @@ def try_int(value):
     except ValueError:
         return 0
 
-@cache_page(urgent_expire_cache)
+def popularityCheck():
+    print('Popularity Check: Started')
+    podcasts = Podcast.objects.all()
+    for podcast in podcasts:
+        likes = 0
+        if podcast != None and podcast.comments != None:
+            comment_ids = quickle.loads(podcast.comments)
+            total_comments = len(comment_ids)
+            if comment_ids != None and total_comments > 0:
+                for comment_id in comment_ids:
+                    comment = Comment.objects.filter(id=comment_id, podcast=id).first()
+                    if comment != None:
+                        likes += comment.likes
+            podcast.score = likes
+            podcast.popularity = likes + (total_comments / 2)
+            podcast.save()
+    print('Popularity Check: Finished')
+
+#@cache_page(urgent_expire_cache)
 def comments_master(request, id, amount, offset):
+    sleep(simulated_delay)
     comments = dict()
     total_comments = 0
     podcast = Podcast.objects.filter(id=id).first()
@@ -165,10 +227,14 @@ def comments_master(request, id, amount, offset):
                     comments[comment_id] = comment_to_list(comment)
     return JsonResponse({'comments_total': total_comments, 'comments': comments})
 
-@cache_page(urgent_expire_cache)
+#@cache_page(urgent_expire_cache)
 def comments_sub(request, id, amount, offset):
+    sleep(simulated_delay)
     comments = dict()
     total_comments = 0
+    parent = Comment.objects.filter(id=id).first()
+    if parent != None:
+        total_comments = parent.sub_count
     data = Comment.objects.filter(parent_id=id)[int(offset):int(amount)]
     if data != None:
         for comment in data:
@@ -190,7 +256,8 @@ def comment_to_list(comment):
             'user': comment.user,
             'datetime': comment.datetime,
             'likes': comment.likes,
-            'dislikes': comment.dislikes}
+            'dislikes': comment.dislikes,
+            'subCount': comment.sub_count}
 
 def random_color():
     min_color = 80
@@ -284,4 +351,5 @@ def session_dislike(request, id):
             if comment_id != id:
                 new_liked.append(comment_id)
         request.session['liked'] = new_liked
+
 
