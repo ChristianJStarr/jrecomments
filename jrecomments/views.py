@@ -88,12 +88,13 @@ def podcast_to_list(podcast, total_comments=None):
             'date':podcast.date,
             'comments':total_comments,
             'score':podcast.score,
-            'popularity':podcast.popularity}
+            'popularity':podcast.popularity,
+            'spotify':podcast.spotify_id}
 
 def update_podcast_library(fetch_all=False):
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=secret_id))
     offset = 0
-    print('Updating Podcast Library - Fetch All: ')
+    print('Updating Podcast Library - Fetch All: ' + str(fetch_all))
     if not fetch_all:
         ## CHECK FOR UPDATE
         results = sp.show_episodes('4rOoJ6Egrf8K2IrywzwOMk', limit=10, offset=offset, market='US')
@@ -104,6 +105,7 @@ def update_podcast_library(fetch_all=False):
             id = int(id)
             duration_ms = result['duration_ms']
             release_date = result['release_date']
+            spotify_id = result['id']
             podcast = Podcast.objects.filter(id=id).first()
             if podcast == None:
                 podcast = Podcast()
@@ -123,6 +125,7 @@ def update_podcast_library(fetch_all=False):
             podcast.duration = get_podcast_duration(duration_ms)
             podcast.id = id
             podcast.name = name
+            podcast.spotify_id = spotify_id
             podcast.date = release_date
             podcast.save()
     else:
@@ -139,6 +142,7 @@ def update_podcast_library(fetch_all=False):
                 id = int(id)
                 duration_ms = result['duration_ms']
                 release_date = result['release_date']
+                spotify_id = result['id']
                 podcast = Podcast.objects.filter(id=id).first()
                 if podcast == None:
                     podcast = Podcast()
@@ -159,6 +163,7 @@ def update_podcast_library(fetch_all=False):
                 podcast.id = id
                 podcast.name = name
                 podcast.date = release_date
+                podcast.spotify_id = spotify_id
                 podcast.save()
 
 def get_podcast_id(data):

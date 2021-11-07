@@ -10,6 +10,7 @@ class Podcast(models.Model):
     duration = models.TextField(default='0h0m', null=True)
     score = models.IntegerField(default=0)
     popularity = models.IntegerField(default=0)
+    spotify_id = models.TextField(default='')
 
 
 class Comment(models.Model):

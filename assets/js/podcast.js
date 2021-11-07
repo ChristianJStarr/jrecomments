@@ -20,6 +20,9 @@ var clearing = false;
 
 var currentSearch = '';
 
+var playing = false;
+var playingId = 0;
+var playerSrc = 'https://open.spotify.com/embed/episode/{0}?utm_source=generator&theme=0';
 
 var commentsLoaded = 0;
 
@@ -55,7 +58,10 @@ var comment_com_bar = '<div class="com-bar">' +
 //13-'subCount'
 
 
-
+var spotify_web_template = '<iframe' +
+    'src="https://open.spotify.com/embed/episode/{0}?utm_source=generator" width="100%" height="232"' +
+    'frameBorder="0" allowFullScreen=""' +
+    'allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>';
 
 var sub_comment_template = '<div class="com-sub" id="{0}" podcastId="{5}" masterId="{6}" replyToId="{7}" date="{14}">' +
     '<a class="com-text">' +
@@ -126,6 +132,8 @@ $(document).ready(function(){
 
     //Request podcast data
     getPodcastData();
+
+    $('#top-bar').css('opacity','1');
 
     // Get Liked and Disliked Comments from Session
     if(window.liked != 'None'){
@@ -360,6 +368,7 @@ function updatePodcastView(loadin=false){
             '<a class="id">{0}</a>' +
             '<a class="name">{1}</a>' +
             '<span class="duration-preview">{2}</span>' +
+            '<div class="play"><i class="fa fa-play"></i>PLAYER</div>' +
             '<i class="fa fa-close close"></i>' +
             '<div class="content"></div></div>';
         container.append(podcastDataFormat(podcastTemplate, podcast));
@@ -459,7 +468,9 @@ function turnOn(podcast){
     podcast.find('.duration-preview').css('opacity', 0);
     podcast.find('.data-bar').css('opacity', 1);
     podcast.find('.close').css('opacity', 1);
+    podcast.find('.play').css('opacity', 1);
     podcast.find('.comment-max-char').text('0');
+    podcast.find('.name').css('max-width', '51%');
     podcast.find('.comment-input').on("change keyup paste", function() {
         var totalLength = $(this).val().length;
         podcast.find('.comment-max-char').text(totalLength);
@@ -489,19 +500,24 @@ function turnOn(podcast){
     getCommentsMaster(podcastId, 50, 0);
     opened.push(podcast);
 
-
     gtag('event','open_podcast', {
         "id": podcastId,
         "name": podcastData[1]
     });
 }
 function turnOff(podcast){
+    if(playing){
+        $('.playing-prompt').css('opacity', 1);
+        $('.playing-prompt').css('pointer-events', 'auto');
+    }
     var podcastId = podcast.attr('id').split('-')[1];
     var podcastData = podcasts[podcastId];
     podcast.removeClass('extended');
     podcast.find('.duration-preview').css('opacity', 1);
     podcast.find('.close').css('opacity', 0);
+    podcast.find('.play').css('opacity', 0);
     podcast.find('.data-bar').css('opacity', 0);
+    podcast.find('.name').css('max-width', '63%');
     podcast.find('.podcast-click').show();
     setTimeout(function (){
         podcast.find('.content').text('');
@@ -546,6 +562,32 @@ function scrollTo(selector, removal) {
         scrollTop: offset.top - ($main.offset().top - $main.scrollTop()) - removal
     }, "fast");
 }
+
+// PLAYER
+function enablePlayer(podcastId){
+    $('.player').attr('src', playerSrc.format(podcasts[podcastId].spotify));
+    $('#top-bar').css('opacity', 0);
+    setTimeout(function (){
+        var playerBar = $('#player-bar');
+        var topBar = $('#top-bar');
+        $('#top-bar').hide();
+        playerBar.show();
+        playerBar.css('opacity','0.75');
+    }, 500);
+    playing = true;
+    playingId = podcastId;
+}
+function disablePlayer(){
+    $('#player-bar').css('opacity', 0);
+    setTimeout(function (){
+        $('#player-bar').hide();
+        $('#top-bar').show();
+        $('#top-bar').css('opacity','1');
+        $('.player').attr('src', '');
+    }, 500);
+    playing = false;
+}
+
 
 // NICKNAME
 var can_submit_nick = false;
@@ -1099,6 +1141,19 @@ function registerPodcastEvents(){
        }
     });
 
+    $(document).on('click', '.play', function(){
+        var podcastId = $(this).parent().attr('id').split('-')[1];
+        enablePlayer(podcastId);
+    });
+    $(document).on('click', '.playing-prompt .yes', function(){
+        $('.playing-prompt').css('opacity', 0);
+        $('.playing-prompt').css('pointer-events', 'none');
+    });
+    $(document).on('click', '.playing-prompt .no', function(){
+        disablePlayer();
+        $('.playing-prompt').css('opacity', 0);
+        $('.playing-prompt').css('pointer-events', 'none');
+    });
 }
 
 // COMMENT INPUT

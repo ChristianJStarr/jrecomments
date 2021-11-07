@@ -66,6 +66,23 @@
                         <option value="popular">Most Popular</option>
                     </select>
                 </div>
+                <div id="player-bar">
+                    <iframe class="player" src="https://open.spotify.com/embed/episode/4kXNjrdi6b4KbjUg6WTrKC?utm_source=generator&amp;theme=0" scrolling="no" width="100%" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    <div class="coverup"></div><div class="coverup2"></div>
+                    <div class="open-spotify-wrap">
+                        <div class="open-spotify"><i class="fa fa-spotify"></i></div>
+                    </div>
+                    <div class="playing-prompt">
+                        <a>Continue Playing?</a>
+                        <a class="yes">Yes</a>
+                        <a class="no">No</a>
+                    </div>
+                    <style>
+                        #root > div{
+                        	background:transparent;
+                        }
+                    </style>
+                </div>
                 <div id="nickname">
                     <div id="nickname-container">
                         <a>ENTER A DISPLAY NAME</a>
@@ -74,17 +91,25 @@
                         <input type="submit" value="OK">
                     </div>
                 </div>
-            <div id="container" class="no-scroll-bar">
-                <div id="loading-podcast">
-                    <div class="dots">
-                        <div class="circle c-1"></div>
-                        <div class="circle c-2"></div>
-                        <div class="circle c-3"></div>
+                <div id="container" class="no-scroll-bar">
+                    <div id="loading-podcast">
+                        <div class="dots">
+                            <div class="circle c-1"></div>
+                            <div class="circle c-2"></div>
+                            <div class="circle c-3"></div>
+                        </div>
+                        <h3>Loading Podcasts</h3>
                     </div>
-                    <h3>Loading Podcasts</h3>
                 </div>
             </div>
-            </div>
+            <!--<div id="player-wrap">
+                <div id="player">
+                </div>
+                <div id="player-bottom">
+                    <a>#0000 PODCAST TITLE</a>
+                    <p>PODCAST DESCRIPTION</p>
+                </div>
+            </div>-->
             <footer>
                 <h2>Made with <i class="fa fa-heart heart"></i> from Flint, MI</h2>
                 <div id="donate">
