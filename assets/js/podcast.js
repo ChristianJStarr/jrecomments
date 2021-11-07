@@ -114,9 +114,6 @@ var loadingCommentsTemplate = '<div class="loading-comments">' +
 var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments no-scroll-bar-com">' + loadingCommentsTemplate + '</div></div>';
 
 $(document).ready(function(){
-    if(!window.authenticated){
-        askForNickname();
-    }
     var time = 0.5;
     LoadSequence(time);
     setInterval(function(){
@@ -1218,7 +1215,7 @@ function registerPodcastEvents(){
                     $('#wrapper').removeClass('authenticated');
                     window.username = '';
                     window.authenticated = false;
-                    console.log('logged out');
+                    location.reload();
                 }
                 else{
                 }
