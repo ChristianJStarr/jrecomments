@@ -10,7 +10,10 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
 
     parent_id = try_int(parent_id)
     reply_to_id = try_int(reply_to_id)
-
+    comment_text = str(comment_text)
+    comment_text = comment_text.replace('<div>', '')
+    comment_text = comment_text.replace('</div>', '')
+    comment_text = comment_text.replace('<br>', '')
     ## FILTER COMMENT
     comment_good = True
      #check length
@@ -20,6 +23,7 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
     if comment_good:
         re1 = re.compile(r"[<>/{}[\]~`]");
         if re1.search(comment_text):
+            print(comment_text)
             comment_good = False
 
     if not comment_good:

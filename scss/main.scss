@@ -8,6 +8,7 @@ html,body{
     color:white;
     margin: 0;
     font-family: helvetica;
+    font-family: 'Roboto Mono', helvetica;
     height:100vh;width:100vw;
     position: relative;
     overflow: hidden;
@@ -94,7 +95,34 @@ input, select, textarea{
 			font-size: 2vh;	
 		}
 	}
+	.auth-wrap{
+		position:absolute;
+		top:7vh;
+		height:1.222vh;
+		width:auto;
+		margin:0 auto;
+		right:0;left:0;
+		display:none;
+	}
+	h3{
+		display:inline-block;
+		color:lightgrey;
+		font-size: 1.222vh;
+		margin:0.5vh;
+	}
+
 }
+#wrapper.authenticated{
+		h1{
+			top:3.5vh;
+		}
+		.auth-wrap{
+			display:block;
+			top:5.5vh;
+		}
+	}
+
+
 #container-wrap{
 	width: calc(100vw - 1.5vh);
 	min-width:320px;
@@ -304,7 +332,8 @@ input, select, textarea{
 	vertical-align:top;
 	position: relative;
 	overflow: hidden;
-	transition: height ease 0.5s;
+	border:solid 1px #1d1d1d;
+	transition: height ease 0.5s, border ease 0.5s;
 	.podcast-click{
 		position: absolute;
 		right: 0;left: 0;top: 0;bottom: 0;
@@ -316,14 +345,18 @@ input, select, textarea{
 	}
 	.id{
 		font-size: 2vh;
-		padding: 1.5vh 0 1.5vh 1.5ch;
+		line-height: 1.8vh;
+		padding:1.5vh 0 1.5vh 1.5vh;
+		box-shadow:border-box;
 		vertical-align: top;
 		display: inline-block;
 		color: orange;
+		font-weight:700;
 		&:before{content:'#';}
 	}
 	.name{
 		font-size: 2vh;
+		line-height:1.8vh;
 		padding: 1.5vh 0.5vh 1.5vh 1.5vh;
 		display: inline-block;
 		max-width: 63%;
@@ -369,7 +402,9 @@ input, select, textarea{
 			padding-right:0.7vh;
 		}
 	}
-
+	&.currently-playing{
+		border:solid 1px rgba(196,130,16,0.4);
+	}
 	.duration-preview{
 		font-size: 1.5vh;
 		color: grey;
@@ -945,16 +980,15 @@ input, select, textarea{
 	position: absolute;
 	right: 0;left: 0;top: 0;
 	width: 35vh;height: auto;
-	margin: 28vh auto;
+	margin: 10vh auto;
 	border: solid 1px #2d2d2d;
 	display: block;
 	border-radius: 1vh;
-	background:black;
+	background:#0d0d0d;
 	overflow: hidden;
-	padding-right: 1.5vh;
 	font-size: 0;
 	text-align: center;
-	box-shadow: 0 0 5vh 5vh rgba(0,0,0,0.8);
+	padding:0;
 }
 #nickname{
 	position: absolute;
@@ -963,41 +997,70 @@ input, select, textarea{
 	display: none;
 	background:rgba(0,0,0,0.5);
 	z-index:1000;
-	p{
+	.error{
 		display: block;
 		font-size: 1.5vh;
 		color: red;
-		max-width: 30vh;
-		padding:0;margin: 1vh auto 0 auto;
+		padding:0;margin: 1vh 1.5vh 0 1.5vh;
 		text-align: center;
-		display: none;
+		display: block;
+		width:calc(100% - 3vh)
 	}
-	a{
+	.title{
 		display: block;
 		font-size: 2vh;
-		padding: 2vh 0 0 0;
+		padding: 2.5vh 0 1vh 0;
 		color: lightgrey;
+	}
+	.terms{
+		width:calc(100% - 3vh);
+		margin:1.5vh 1.5vh 0 1.5vh;
+		display:block;
+		font-size:1.222vh;
+		line-height:2vh;
+		a{
+			color:grey;
+		}
+	}
+	.cancel{
+		margin: 1.5vh 0 1.5vh 1.5vh;
+		height: 5vh;width: calc(50% - 2.25vh);
+		background: #1d1d1d;
+		color: lightgrey;
+		font-size: 1.75vh;
+		line-height: 2vh;
+		padding:1.5vh 0;
+		box-sizing:border-box;
+		vertical-align:top;
+		display:inline-block;
+		border-radius:1vh;
+	}
+	.continue{
+		margin: 1.5vh 1.5vh 1.5vh 1.5vh;
+		height: 5vh;width: calc(50% - 2.25vh);
+		background: #1d1d1d;
+		color: grey;
+		font-size: 1.75vh;
+		line-height: 2vh;
+		padding:1.5vh 0;
+		box-sizing:border-box;
+		vertical-align:top;
+		border-radius:1vh;
+		display:inline-block;
 	}
 	input{
 		border-radius: 1vh;
 		display: inline-block;
 		box-sizing: border-box;
 	}
-	input[type=text]{
-		margin: 1.5vh;
+	input[type=text], input[type=password]{
+		margin: 1.5vh 1.5vh 0 1.5vh;
 		box-sizing: border-box;
-		height: 5vh;width: calc(80% - 3vh);
+		height: 5vh;width: calc(100% - 3vh);
 		background: #2d2d2d;
 		color: lightgrey;
 		font-size: 1.75vh;
 		padding-left: 1.5vh;
-	}
-	input[type=submit]{
-		margin: 1.5vh 0 1.5vh 0;
-		height: 5vh;width: calc(20% - 0vh);
-		background: #1d1d1d;
-		color: grey;
-		font-size: 1.75vh;
 	}
 }
 
@@ -1211,7 +1274,7 @@ input, select, textarea{
 	.playing-prompt{
 		position:absolute;
 		right:0;left:0;top:0;bottom:0;
-		background:rgba(0,0,0,0.75);
+		background:rgba(0,0,0,0.85);
 		width:100%;
 		height:5vh;
 		text-align:center;

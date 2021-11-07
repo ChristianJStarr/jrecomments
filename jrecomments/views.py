@@ -2,6 +2,8 @@ import datetime
 import random
 from time import sleep
 
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.http import JsonResponse, FileResponse, Http404
 from django.shortcuts import render
 import spotipy
@@ -35,6 +37,38 @@ def index_views(request):
              'liked': request.session.get('liked'),
              'disliked': request.session.get('disliked')}
     return render(request, 'main.html', data)
+
+def loginsignup(request):
+    if request.method == 'POST':
+        try:
+            username = request.POST['username']
+            password = request.POST['password']
+        except MultiValueDictKeyError:
+            return JsonResponse({'status': 'failed', 'reason': 'There was an Error.'})
+
+        username = str(username)
+        if len(username) < 5 and len(password) == 0:
+            return JsonResponse({'status': 'failed', 'reason': 'Invalid username or password length.'})
+
+        check = User.objects.filter(username=username).first()
+        if check != None:
+            if check.password == password:
+                login(request, check)
+                return JsonResponse({'status': 'success', 'reason': ''})
+            return JsonResponse({'status': 'failed', 'reason': 'Username already exists or you entered the wrong password.'})
+        user = User()
+        user.username = username
+        user.password = password
+        user.save()
+        login(request, user)
+        return JsonResponse({'status': 'success', 'reason': ''})
+    else:
+        return JsonResponse({'status': 'failed', 'reason': 'There was an Error.'})
+
+def logout_action(request):
+    logout(request)
+    return JsonResponse({'status': 'success', 'reason': ''})
+
 
 @cache_page(long_expire_cache)
 def privacy_views(request):
@@ -273,7 +307,9 @@ def random_color():
 
 def comment(request, id, parent_id=0, reply_to_id=0):
     if request.method == 'POST':
-        name = request.session.get('nickname')
+        if not request.user.is_authenticated:
+            return JsonResponse({'status': 'failed', 'reason': 'Must be logged in.'})
+        name = request.user.get_username()
         try:
             comment_text = request.POST['comment']
         except MultiValueDictKeyError:

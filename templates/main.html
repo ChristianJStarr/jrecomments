@@ -26,6 +26,9 @@
         <meta name="screen-orientation" content="portrait">
         <meta name="x5-orientation" content="portrait">
 
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
 
         <!-- CSS Styling -->
         <link rel="stylesheet" href="{% static 'css/reset.css' %}">
@@ -34,12 +37,14 @@
         <!-- Javascript -->
         <script type="text/javascript">
             window.CSRF_TOKEN = "{{ csrf_token }}";
-            window.nickname = "{{ nickname }}";
+            window.authenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+            window.username = "{{ nickname }}";
             window.liked = "{{ liked |safe}}";
             window.disliked = "{{ disliked |safe}}";
         </script>
         <script src="{% static 'js/jquery.js' %}"></script>
         <script src="{% static 'js/jre-comments.js' %}"></script>
+        <script src="{% static 'js/md5.js' %}"></script>
         <script src="{% static 'js/podcast.js' %}"></script>
 
         <!-- Google Analytics -->
@@ -54,11 +59,13 @@
     </head>
     <body>
         <div id="particles"></div>
-        <div id="wrapper">
+        <div id="wrapper" class="{% if user.is_authenticated %}authenticated{% endif %}">
             <h1>[ THE UNOFFICIAL JRE COMMENT SECTION  ]</h1>
+            <div class="auth-wrap"><h3 id="username-preview">[ {{user.get_username }} ]</h3><h3 id="logout-button">[ LOGOUT ]</h3></div>
+
             <div id="container-wrap">
                 <div id="top-bar">
-                    <input type="text" id="search-bar" placeholder="Search Podcasts...">
+                    <input type="text" name="search" id="search-bar" placeholder="Search Podcasts...">
                     <input type="submit" id="search-submit" value="SEARCH">
                     <select name="" id="sort">
                         <option value="newest">Newest First</option>
@@ -77,6 +84,7 @@
                         <a class="yes">Yes</a>
                         <a class="no">No</a>
                     </div>
+
                     <style>
                         #root > div{
                         	background:transparent;
@@ -85,10 +93,12 @@
                 </div>
                 <div id="nickname">
                     <div id="nickname-container">
-                        <a>ENTER A DISPLAY NAME</a>
-                        <p><!--  ERROR MESSAGE --></p>
-                        <input type="text" maxlength="20" placeholder="Display Name">
-                        <input type="submit" value="OK">
+                        <a class="title">LOGIN / SIGN UP</a>
+                        <p class="error"><!--  ERROR MESSAGE -->Username must not contain: '!@#$%^&*'.</p>
+                        <input id="username" type="text" maxlength="20" placeholder="Username">
+                        <input id="password" type="password" maxlength="20" placeholder="Password">
+                        <p class="terms">By continuing you agree to our<br><a href="{% url 'terms'%}">Terms</a> and <a href="{% url 'privacy'%}">Privacy Policy</a></p>
+                        <a class="cancel">CANCEL</a><a class="continue">CONTINUE</a>
                     </div>
                 </div>
                 <div id="container" class="no-scroll-bar">
@@ -120,6 +130,7 @@
                 <a class="links" href="{% url 'terms'%}">Terms & Conditions</a>
             </footer>
         </div>
+
         <script>
             particlesJS.load('particles', '{% static 'particlesjs-config.json' %}', function() {
                 console.log('space particle simulation loaded.');

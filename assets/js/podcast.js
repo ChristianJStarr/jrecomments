@@ -23,10 +23,13 @@ var currentSearch = '';
 var playing = false;
 var playingId = 0;
 var playerSrc = 'https://open.spotify.com/embed/episode/{0}?utm_source=generator&theme=0';
+var currentPlayingGlowInterval;
+
 
 var commentsLoaded = 0;
-
 var currentReplyId = 0;
+
+
 
 var comment_com_bar_original = '<div class="com-bar">' +
     '<a class="com-dislike"><i class="fa fa-arrow-down"></i></a>' +
@@ -111,6 +114,9 @@ var loadingCommentsTemplate = '<div class="loading-comments">' +
 var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments no-scroll-bar-com">' + loadingCommentsTemplate + '</div></div>';
 
 $(document).ready(function(){
+    if(!window.authenticated){
+        askForNickname();
+    }
     var time = 0.5;
     LoadSequence(time);
     setInterval(function(){
@@ -132,7 +138,6 @@ $(document).ready(function(){
 
     //Request podcast data
     getPodcastData();
-
     $('#top-bar').css('opacity','1');
 
     // Get Liked and Disliked Comments from Session
@@ -362,7 +367,6 @@ function updatePodcastView(loadin=false){
     view = view.slice(addonOffset, amountToAdd + addonOffset);
     addonOffset += amountToAdd;
     $.each(view, function (index, podcast){
-        console.log(podcast.name + ' : ' + podcast.popularity);
         var podcastTemplate = '<div class="podcast" id="podcast-{0}">' +
             '<div class="podcast-click"></div>' +
             '<a class="id">{0}</a>' +
@@ -499,7 +503,9 @@ function turnOn(podcast){
     });
     getCommentsMaster(podcastId, 50, 0);
     opened.push(podcast);
-
+    setTimeout(function (){
+        $('#container').css('overflow', 'hidden');
+    },1000);
     gtag('event','open_podcast', {
         "id": podcastId,
         "name": podcastData[1]
@@ -522,7 +528,7 @@ function turnOff(podcast){
     setTimeout(function (){
         podcast.find('.content').text('');
     }, 500);
-
+    $('#container').css('overflow-y', 'scroll');
     gtag('event','close_podcast', {
         "id": podcastId,
         "name": podcastData[1]
@@ -566,7 +572,9 @@ function scrollTo(selector, removal) {
 // PLAYER
 function enablePlayer(podcastId){
     $('.player').attr('src', playerSrc.format(podcasts[podcastId].spotify));
+    $('#podcast-' + podcastId).addClass('currently-playing');
     $('#top-bar').css('opacity', 0);
+    currentPlayingGlow(podcastId);
     setTimeout(function (){
         var playerBar = $('#player-bar');
         var topBar = $('#top-bar');
@@ -585,44 +593,91 @@ function disablePlayer(){
         $('#top-bar').css('opacity','1');
         $('.player').attr('src', '');
     }, 500);
+    clearInterval(currentPlayingGlowInterval);
+    $('.podcast').css('transition', 'height ease 0.5s, border ease 0.5s');
+    $('.podcast').removeClass('currently-playing');
     playing = false;
+}
+function currentPlayingGlow(podcastId){
+    $('#podcast-' + podcastId).css('transition', 'height ease 0.5s, border ease 4s');
+    currentPlayingGlowInterval = setInterval(function (){
+        $('#podcast-' + podcastId).addClass('currently-playing');
+        setTimeout(function (){
+            $('#podcast-' + podcastId).removeClass('currently-playing');
+        }, 2500);
+    },4000);
 }
 
 
+
 // NICKNAME
-var can_submit_nick = false;
 function askForNickname(){
-    $('#nickname').show();
-    $('#nickname-container input[type=text]').focus();
-    $('#nickname-container input[type=text]').on('change keyup paste', function (){
-        var nick = $('#nickname input[type=text]').val();
-        if(nick.length > 2){
-            can_submit_nick = true;
-            $('#nickname-container input[type=submit]').css('color', 'lightgrey');
+    var nickname = $('#nickname');
+    var container = $('#nickname-container');
+    var usernameField = container.find('input[type=text]');
+    var passwordField = container.find('input[type=password]');
+    var cancelBtn = container.find('.cancel');
+    var continueBtn = container.find('.continue');
+
+    nickname.show();
+    usernameField.focus();
+    usernameField.on('change keyup paste', function (){
+        var username = usernameField.val();
+        var password = passwordField.val();
+        if(username.length > 4){
+            if(password.length > 5){
+                continueBtn.css('color', 'lightgrey');
+            }
+            else{
+                continueBtn.css('color', 'grey');
+            }
+            usernameField.css('color', stringToColor(username));
         }
         else{
-            can_submit_nick = false;
-            $('#nickname-container input[type=submit]').css('color', 'grey');
+            continueBtn.css('color', 'grey');
+            usernameField.css('color', 'lightgrey');
         }
     });
-    $('#nickname-container input[type=submit]').on('click', function (){
-        var nick = $('#nickname-container input[type=text]').val();
-        window.nickname = nickname;
-        if(can_submit_nick){
-            var pageUrl = '/action/nickname/set/' + nick + '/';
+    passwordField.on('change keyup paste', function (){
+        var username = usernameField.val();
+        var password = passwordField.val();
+        if(username.length > 4){
+            if(password.length > 5){
+                continueBtn.css('color', 'lightgrey');
+            }
+            else{
+                continueBtn.css('color', 'grey');
+            }
+        }
+        else{
+            continueBtn.css('color', 'grey');
+            usernameField.css('color', 'lightgrey');
+        }
+    });
+    continueBtn.on('click', function (){
+        var usernameV = usernameField.val();
+        var passwordV = passwordField.val();
+        if(usernameV.length > 4 && passwordV.length > 5){
+            passwordV = CryptoJS.MD5(passwordV).toString();
+            var pageUrl = '/action/login/';
             $.ajax({
-                type: 'GET',
+                type: 'POST',
                 url: pageUrl,
+                data: { password: passwordV, username: usernameV, csrfmiddlewaretoken: window.CSRF_TOKEN },
                 dataType: 'json',
                 success: function (data) {
-                    if(data.responseStatus == 'success'){
+                    if(data.status == 'success'){
                         $('#nickname').hide();
-                        $('#nickname p').hide();
-                        window.nickname = nickname;
+                        $('#nickname .error').hide();
+                        window.username = usernameV;
+                        $('#username-preview').text('[ ' + usernameV + ' ]');
+                        window.authenticated = true;
+                        $('#wrapper').addClass('authenticated');
+
                     }
                     else{
-                        $('#nickname p').show();
-                        $('#nickname p').text(data.responseError);
+                        $('#nickname .error').show();
+                        $('#nickname .error').text(data.reason);
                         $('#nickname-container input[type=text]').focus();
                     }
                 },
@@ -631,7 +686,13 @@ function askForNickname(){
                 }
             });
         }
+
     });
+    cancelBtn.on('click', function (){
+        $('#nickname').hide();
+    });
+
+
 }
 var stringToColor = function(str) {
     var hash = 0;
@@ -921,17 +982,13 @@ function nFormatter(num, digits) {
 function registerPodcastEvents(){
     // Check and Ask for Nickname
     $(document).on('click', '.comment-input', function(){
-        if(window.nickname === 'None'){
+        if(!window.authenticated){
             askForNickname();
         }
     });
 
     //Submit Comment
     $(document).on('click', '.comment-submit', function(){
-        if(window.nickname === 'None'){
-            askForNickname();
-            return
-        }
         var podcast = $(this).parent().parent().parent();
         if(podcast == null){return}
         var podcastId = podcast.attr('id').split('-')[1];
@@ -954,10 +1011,6 @@ function registerPodcastEvents(){
     $(document).on('keypress','.comment-input', function (e) {
         if(e.which === 13 && !e.shiftKey){
             var podcast = $(this).parent().parent().parent();
-            if(window.nickname == 'None'){
-                askForNickname();
-                return
-            }
             $(this).attr("disabled", "disabled");
             var podcastId = podcast.attr('id').split('-')[1];
             var comment_input = podcast.find('.comment-input');
@@ -1153,6 +1206,27 @@ function registerPodcastEvents(){
         disablePlayer();
         $('.playing-prompt').css('opacity', 0);
         $('.playing-prompt').css('pointer-events', 'none');
+    });
+    $('#logout-button').on('click', function (){
+        var pageUrl = '/action/logout/';
+        $.ajax({
+            type: 'GET',
+            url: pageUrl,
+            dataType: 'json',
+            success: function (data) {
+                if(data.status == 'success'){
+                    $('#wrapper').removeClass('authenticated');
+                    window.username = '';
+                    window.authenticated = false;
+                    console.log('logged out');
+                }
+                else{
+                }
+            },
+            error: function (error){
+                console.log(error);
+            }
+        });
     });
 }
 
