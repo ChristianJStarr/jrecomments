@@ -615,9 +615,9 @@ function askForNickname(){
     var passwordField = container.find('input[type=password]');
     var cancelBtn = container.find('.cancel');
     var continueBtn = container.find('.continue');
-
     nickname.show();
-    usernameField.focus();
+    setTimeout(function (){
+        usernameField.select(); }, 250);
     usernameField.on('change keyup paste', function (){
         var username = usernameField.val();
         var password = passwordField.val();
@@ -656,6 +656,7 @@ function askForNickname(){
         var passwordV = passwordField.val();
         if(usernameV.length > 4 && passwordV.length > 5){
             passwordV = CryptoJS.MD5(passwordV).toString();
+
             var pageUrl = '/action/login/';
             $.ajax({
                 type: 'POST',
@@ -664,13 +665,30 @@ function askForNickname(){
                 dataType: 'json',
                 success: function (data) {
                     if(data.status == 'success'){
-                        $('#nickname').hide();
-                        $('#nickname .error').hide();
-                        window.username = usernameV;
-                        $('#username-preview').text('[ ' + usernameV + ' ]');
-                        window.authenticated = true;
-                        $('#wrapper').addClass('authenticated');
-
+                        var pageUrl = '/action/request-token/';
+                        $.ajax({
+                            type: 'GET',
+                            url: pageUrl,
+                            dataType: 'json',
+                            success: function (datatwo) {
+                                if(datatwo.status == 'success'){
+                                    $('#nickname').hide();
+                                    $('#nickname .error').hide();
+                                    window.username = usernameV;
+                                    window.CSRF_TOKEN = datatwo.newToken;
+                                    $('#username-preview').text('[ ' + usernameV + ' ]');
+                                    window.authenticated = true;
+                                    $('#wrapper').addClass('authenticated');
+                                    $('.comment-input').select();
+                                }
+                                else{
+                                    location.reload();
+                                }
+                            },
+                            error: function (error){
+                                location.reload();
+                            }
+                        });
                     }
                     else{
                         $('#nickname .error').show();
@@ -920,27 +938,26 @@ function submitComment(podcastId, userId, commentText, parentId=0, replyToId=0){
             data: { comment: commentText, user_id: userId, csrfmiddlewaretoken: window.CSRF_TOKEN },
             dataType: 'json',
             success: function (data) {
-                var status = data.status;
                 var reason = data.reason;
-                if(status == 'success'){
+                if(data.status == 'success'){
                     clearTextInput(podcastId);
+                    liked.push(data.commentId);
+                    if(subComment){
+                        var loaded = $('#' + parentId).attr('loaded');
+                        if(loaded == undefined){
+                            return
+                        }
+                        if(loaded === 'NaN' || loaded === '0' || loaded < 5){
+                            loaded = 5;
+                        }
+                        getCommentsSub(parentId, loaded, 0);
+                    }
+                    else{
+                        getCommentsMaster(podcastId, 50, 0);
+                    }
                 }
                 else{
                     console.log('Submmit Comment Failed: ' + reason);
-                }
-                if(subComment){
-                    var loaded = $('#' + parentId).attr('loaded');
-                    if(loaded == undefined){
-                        return
-                    }
-                    if(loaded === 'NaN' || loaded === '0' || loaded < 5){
-                        loaded = 5;
-                    }
-                    console.log(loaded);
-                    getCommentsSub(parentId, loaded, 0);
-                }
-                else{
-                    getCommentsMaster(podcastId, 50, 0);
                 }
             },
             error: function (error){

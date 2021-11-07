@@ -59,7 +59,6 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
                     return {'status':'failed', 'reason': 'ReplyToId Invalid.'}
         comment.save()
 
-        print('comment has been saved ' + str(comment.podcast))
 
         pod_data = podcast.comments
         comment_ids = []
@@ -73,7 +72,7 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
             add_to_sub_comment_cache(reply_to, comment.id)
         elif parent != None:
             add_to_sub_comment_cache(parent, comment.id)
-        return {'status': 'success', 'reason': 'None'}
+        return {'status': 'success', 'reason': 'None', 'commentId': comment.id}
     return {'status': 'failed', 'reason': 'Podcast not Found.'}
 
 def add_to_sub_comment_cache(comment, comment_id):

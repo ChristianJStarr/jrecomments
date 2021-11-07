@@ -27,7 +27,9 @@ urlpatterns = [
     path('action/like/<id>/', views.like_comment, name='like'),
     path('action/dislike/<id>/', views.dislike_comment, name='dislike'),
     path('action/login/', views.loginsignup, name='login'),
-    path('action/logout/', views.logout_action, name='logout')
+    path('action/logout/', views.logout_action, name='logout'),
+    path('action/request-token/', views.request_token, name='request_token'),
+
 ]
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

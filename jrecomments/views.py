@@ -2,6 +2,7 @@ import datetime
 import random
 from time import sleep
 
+import django.middleware.csrf
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.http import JsonResponse, FileResponse, Http404
@@ -50,6 +51,8 @@ def loginsignup(request):
         if len(username) < 5 and len(password) == 0:
             return JsonResponse({'status': 'failed', 'reason': 'Invalid username or password length.'})
 
+
+
         check = User.objects.filter(username=username).first()
         if check != None:
             if check.password == password:
@@ -69,6 +72,10 @@ def logout_action(request):
     logout(request)
     return JsonResponse({'status': 'success', 'reason': ''})
 
+def request_token(request):
+    if request.user.is_authenticated:
+        return JsonResponse({'status': 'success','newToken': django.middleware.csrf.get_token(request)})
+    return JsonResponse({'status': 'failed', 'reason': 'User not logged in.'})
 
 @cache_page(long_expire_cache)
 def privacy_views(request):

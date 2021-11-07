@@ -94,6 +94,7 @@ input, select, textarea{
 		span{
 			font-size: 2vh;	
 		}
+		transition:top ease 0.5s;
 	}
 	.auth-wrap{
 		position:absolute;
@@ -102,7 +103,10 @@ input, select, textarea{
 		width:auto;
 		margin:0 auto;
 		right:0;left:0;
-		display:none;
+		display:block;
+		opacity:0;
+		pointer-events:none;
+		transition:opacity ease 0.5s, top ease 0.5s;
 	}
 	h3{
 		display:inline-block;
@@ -117,8 +121,9 @@ input, select, textarea{
 			top:3.5vh;
 		}
 		.auth-wrap{
-			display:block;
+			opacity:1;
 			top:5.5vh;
+			pointer-events:auto;
 		}
 	}
 
