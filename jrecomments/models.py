@@ -27,6 +27,18 @@ class Comment(models.Model):
     reply_id = models.IntegerField(default=0)
     reply_username = models.TextField(default='Unknown Name')
 
+    def to_list(self):
+        return {'id': self.id,
+                'username': self.username,
+                'comment': self.comment,
+                'podcast': self.podcast_id,
+                'master': self.parent_id,
+                'replyToId': self.reply_id,
+                'replyToName': self.reply_username,
+                'datetime': self.date_time,
+                'likes': self.likes,
+                'subCount': self.sub_count}
+
 
 class UserData(models.Model):
     username = models.TextField(primary_key=True)

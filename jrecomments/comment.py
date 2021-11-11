@@ -136,14 +136,3 @@ def try_int(value):
     except ValueError:
         return 0
 
-def comment_to_list(comment):
-    return {'id':comment.id,
-            'username': comment.username,
-            'comment':comment.comment,
-            'podcast': comment.podcast_id,
-            'master': comment.parent_id,
-            'replyToId': comment.reply_id,
-            'replyToName': comment.reply_username,
-            'datetime': comment.date_time,
-            'likes': comment.likes,
-            'subCount': comment.sub_count}

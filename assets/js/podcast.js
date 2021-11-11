@@ -321,7 +321,7 @@ function turnOn(podcast){
     content.text('');
     var date = new Date(podcastData.date);
     date = date.getMonth() + '/' + date.getDay() + '/' + date.getFullYear().toString().substr(2);
-    content.append(dataBar.format(date, podcastData.duration, podcastData.score, podcastData.comments));
+    content.append(dataBar.format(date, podcastData.duration, nFormatter(podcastData.score), nFormatter(podcastData.comments)));
     content.append(commentsWrapTemplate);
     content.append(commentInputTemplate);
 

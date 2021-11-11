@@ -2,7 +2,7 @@ import spotipy
 from spotipy import SpotifyClientCredentials
 import quickle
 
-from jrecomments.models import Podcast
+from jrecomments.models import Podcast, Comment
 
 client_id = '9f4f9e03f82d4d469df810cdf54442e9'
 secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
@@ -125,6 +125,28 @@ def podcast_to_list(podcast, total_comments=None):
             'popularity':podcast.popularity,
             'spotify':podcast.spotify_id}
 
+
+def parent_fix():
+    podcasts = Podcast.objects.all()
+    for podcast in podcasts:
+        comments = Comment.objects.filter(podcast_id=podcast.id, parent_id=0)
+        for comment in comments:
+            sub_comments = Comment.objects.filter(podcast_id=podcast.id, parent_id=comment.id)
+            subs = []
+            for sub_comment in sub_comments:
+                sub_comment.reply_id = comment.id
+                sub_comment.save()
+                subs.append(sub_comment.id)
+            comment.sub_count = len(sub_comments)
+            comment.sub_comments = quickle.dumps(subs)
+            comment.save()
+            print('Likes: ' + str(comment.likes))
+
+
+
+
+def get_podcast(podcast_id):
+    return Podcast.objects.filter(id=podcast_id).first()
 
 def try_int(value):
     try:
