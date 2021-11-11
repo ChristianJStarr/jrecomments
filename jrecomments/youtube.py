@@ -93,28 +93,29 @@ def get_youtube_links(podcast_id):
 
     return None
 
-def find_youtube_links(count=0, max_quota=1000):
+def find_youtube_links(amount=0, max_quota=1000, max_links=5):
     max_calls = max_quota / 100
-    current = Podcast.objects.all().last().id
-    if count == 0:
-        count = current
-    change = 0
-    if count > 0:
-        while True:
-            find_youtube_link_task(current)
-            current -= 1
-            change += 1
-            if change == count or change == max_calls:
-                break
+    count = 0
+    call_count = 0
+    podcasts = Podcast.objects.order_by('-id')
+    if amount == 0:
+        amount = len(podcasts)
+    for podcast in podcasts:
+        called = find_youtube_link_task(podcast, max_links)
+        if called:
+            call_count += 1
+        count += 1
+        if count >= amount or call_count >= max_calls:
+            break
 
-def find_youtube_link_task(podcast_id, max_count=5):
-    podcast = Podcast.objects.filter(id=podcast_id).first()
+
+def find_youtube_link_task(podcast, max_count=5):
     if podcast != None:
         if podcast.youtube_links != None:
             youtube_links = quickle.loads(podcast.youtube_links)
-            if youtube_links != None:
-                print('FindLinks : #' + str(podcast_id) + ' has links.')
-                return
+            if youtube_links != None and len(youtube_links) > 0:
+                print('FindLinks : #' + str(podcast.id) + ' has links. ' + str(len(youtube_links)))
+                return False
 
         links = []
         count = 0
@@ -140,9 +141,10 @@ def find_youtube_link_task(podcast_id, max_count=5):
                 if (count >= max_count):
                     break
             break
-        print('FindLinks : #' + str(podcast_id) + ' found links. Amount: ' + str(len(links)))
+        print('FindLinks : #' + str(podcast.id) + ' found links. Amount: ' + str(len(links)))
         podcast.youtube_links = quickle.dumps(links)
         podcast.save()
+        return True
 
 def video_comments(video_id, max_calls):
     replies = []

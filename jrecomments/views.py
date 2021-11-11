@@ -45,7 +45,7 @@ def index_views(request):
     #youtube_pull_comments(500, 70)
     #popularity_check()
     #parent_fix()
-    #find_youtube_links(0,8000)
+    #find_youtube_links(0, 3000)
     #save_comments(1732, '51aDpx6ULz8', 250)
     #save_comments(1732, '2b9-tsND40g', 250)
     #save_comments(1731, 'QHQzoHolWvI', 250)
