@@ -11,26 +11,24 @@ class Podcast(models.Model):
     score = models.IntegerField(default=0)
     popularity = models.IntegerField(default=0)
     spotify_id = models.TextField(default='')
+    youtube_links = models.BinaryField(default=None, null=True)
 
 
 class Comment(models.Model):
-    podcast = models.IntegerField(default=0)
-    user = models.UUIDField(null=True, default=None)
-    name = models.TextField(default='Unknown Name')
-    name_color = models.TextField(default='(0,0,0)')
-    datetime = models.DateTimeField()
-    donor = models.TextField(default='')
-
+    podcast_id = models.IntegerField(default=0)
+    username = models.TextField(default='Unknown Name')
+    date_time = models.DateTimeField()
     likes = models.IntegerField(default=0)
-    dislikes = models.IntegerField(default=0)
     popularity = models.IntegerField(default=0)
     comment = models.TextField()
     sub_comments = models.BinaryField(default=None, null=True)
     sub_count = models.IntegerField(default=0)
     parent_id = models.IntegerField(default=0)
-
-    replyToId = models.IntegerField(default=0)
-    replyToName = models.TextField(default='Unknown Name')
-    replyToColor = models.TextField(default='(0,0,0)')
+    reply_id = models.IntegerField(default=0)
+    reply_username = models.TextField(default='Unknown Name')
 
 
+class UserData(models.Model):
+    username = models.TextField(primary_key=True)
+    comments = models.BinaryField(default=None, null=True)
+    likes = models.BinaryField(default=None, null=True)

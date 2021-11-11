@@ -65,7 +65,6 @@ input, select, textarea{
 	padding:0;margin:0;
 	box-sizing:border-box;
 }
-
 #particles{
 	position: absolute;
 	right: 0;left: 0;top: 0;bottom: 0;
@@ -138,8 +137,7 @@ input, select, textarea{
 	display: inline-block;
 	border-radius: 1vh;
 	background:black;
-	overflow: hidden;
-	padding-right: 1.5vh;
+	overflow:hidden;
 	position:relative;
 	box-sizing:border-box;
 	text-align:left;
@@ -147,9 +145,9 @@ input, select, textarea{
 }
 #top-bar{
 	height:5vh;
-	width:calc(100% - 1.5vh);
+	width:calc(100% - 3vh);
 	box-sizing:border-box;
-	margin:1.5vh 0 1.5vh 1.5vh;
+	margin:1.5vh 1.5vh 1.5vh 1.5vh;
 	display:block;
 	font-size:0;
 	text-align:center;
@@ -186,6 +184,9 @@ input, select, textarea{
 			display:inline-block;
 			vertical-align:top;
 		}
+	}
+	&.make-visible{
+		opacity:1;
 	}
 }
 #loading-podcast{
@@ -231,14 +232,21 @@ input, select, textarea{
 			transform:rotate(-180000deg);
 		}	
 }
+#container-filler{
+	width:100%;
+	height:0vh;
+	display:block;
+	margin:0;
+	background:green;
+}
 #container{
 	overflow-y: scroll;
 	height: 70vh;width:100%;
-	position:absolute;
-	left:0;top:8vh;right:0;
+	position:relative;
 	vertical-align:top;
 	scroll-snap-type: y mandatory;
 	display:inline-block;
+	transition:height ease 0.5s;
 	&::-webkit-scrollbar {
 	  width: 1.5vh;
 	  -webkit-appearance: none;
@@ -260,7 +268,8 @@ input, select, textarea{
 	}
 }
 #container.player-enabled{
-	top:19.4vh;height:58.4vh;
+	height:calc(76.5vh - ((100vw - 3vh) * 0.5625));
+	min-height:calc(76.5vh - (500px * 0.5625));
 }
 .no-scroll-bar{
 	padding-right:0;
@@ -338,7 +347,8 @@ input, select, textarea{
 	position: relative;
 	overflow: hidden;
 	border:solid 1px #1d1d1d;
-	transition: height ease 0.5s, border ease 0.5s;
+	transition: height ease 0.5s, border ease 0.5s, min-height ease 0.5s;
+	font-size:0;
 	.podcast-click{
 		position: absolute;
 		right: 0;left: 0;top: 0;bottom: 0;
@@ -351,7 +361,7 @@ input, select, textarea{
 	.id{
 		font-size: 2vh;
 		line-height: 1.8vh;
-		padding:1.5vh 0 1.5vh 1.5vh;
+		padding:1.5vh 0 1.2vh 1.5vh;
 		box-shadow:border-box;
 		vertical-align: top;
 		display: inline-block;
@@ -362,7 +372,7 @@ input, select, textarea{
 	.name{
 		font-size: 2vh;
 		line-height:1.8vh;
-		padding: 1.5vh 0.5vh 1.5vh 1.5vh;
+		padding: 1.5vh 0.5vh 1.2vh 1.5vh;
 		display: inline-block;
 		max-width: 63%;
 		overflow: hidden;
@@ -374,12 +384,12 @@ input, select, textarea{
 	}
 	.close{
 		position: absolute;
-		right: 1.5vh;top: 1.5vh;
-		width: 2vh;height: 2vh;
+		right: 0;top: 0;
+		width: 5vh;height: 5vh;
 		font-size: 2.2vh;
 		cursor: pointer;
 		vertical-align:top;
-		line-height:2.2vh;
+		line-height:5vh;
 		opacity: 0;
 		box-sizing:border-box;
 		transition: opacity ease 0.5s;
@@ -388,33 +398,64 @@ input, select, textarea{
 	}
 	.play{
 		position: absolute;
-		right: 5vh;top: 2vh;
-		width: auto;height: 2vh;
+		right: 5vh;top: 0;
+		width: auto;height: 5vh;
 		font-size: 1.2vh;
 		box-sizing:border-box;
 		text-align:center;
-		line-height:1.2vh;
+		line-height:5vh;
 		vertical-align:top;
 		cursor: pointer;
 		opacity: 0;
+		padding:0 0.5vh;
+		text-align:center;
 		transition: opacity ease 0.5s;
 		color: grey;
 		i{
 			vertical-align:top;
 			display:inline-block;
-			line-height:1.2vh;
+			line-height:5vh;
 			font-size:1vh;
 			padding-right:0.7vh;
+			&.fa-close{
+				font-size:1.5vh;
+			}
 		}
 	}
-	&.currently-playing{
-		border:solid 1px rgba(196,130,16,0.4);
+	.data-bar{
+		width: 100%;height: 2vh;
+		text-align: center;
+		vertical-align: top;
+		display: block;
+		opacity: 0;
+		transition: opacity ease 0.5s, height ease 0.5s;
+		overflow:hidden;
+		user-select:none;
+		a,i,span{
+			font-size:1.3vh;
+			line-height:2vh;
+			padding:0;margin:0;
+			box-sizing:border-box;
+			vertical-align:top;
+			display:inline-block;
+			color:grey;
+		}
+		a{
+			margin:0 2vh;
+			span{
+
+			}
+			i{
+				padding-right:0.5vh;
+				font-size:1vh;
+			}
+		}
 	}
 	.duration-preview{
 		font-size: 1.5vh;
 		color: grey;
 		vertical-align: top;
-		padding: 2vh 0 2vh 0;
+		padding: 2vh 0 1.5vh 0;
 		white-space: nowrap;
 		display: inline-block;
 		transition: opacity ease 0.5s;
@@ -440,43 +481,33 @@ input, select, textarea{
 
 		height: 47.8vh;
 	}
-}
-.data-bar{
-	width: 100%;height: 2vh;
-	text-align: center;
-	vertical-align: top;
-	display: block;
-	opacity: 0;
-	transition: opacity ease 0.5s;
-	overflow:hidden;
-	a{
-		font-size: 1.5vh;
-		padding: 0.25vh 2vh;
-		vertical-align: top;
-		display: inline-block;
-		color: grey;
-		box-sizing:border-box;
-		overflow:hidden;
-		margin:0 0.1vh;
+	&.extended{
+		height: 70vh;
+		.duration-preview{
+			opacity:0;
+		}
+		.data-bar{
+			opacity:1;
+		}
+		.close{
+			opacity:1;
+		}
+		.play{
+			opacity:1;
+		}
+		.name{
+			max-width:51%;
+		}
+		.podcast-click{
+			display:none;
+		}
 	}
-	a span{
-		font-size: 1.4vh;
-		padding: 0.25vh 0;
-		vertical-align: top;
-		display: inline-block;
-		color: grey;
-	}
-	i{
-		font-size: 1.25vh;
-		padding: 0.25vh 0.75vh 0.25vh 0vh;
-		vertical-align: top;
-		display: inline-block;
+	&.currently-playing{
+	
+		border:solid 1px rgba(196,130,16,0.4);
 	}
 }
-.extended{
 
-	height: 70vh;
-}
 
 /*  PODCAST COMMENTS */
 .comments-wrap{
@@ -490,6 +521,7 @@ input, select, textarea{
 	border-radius: 1vh;
 	transition: height ease 0.5s;
 	overflow: hidden;
+	transition: height ease 0.5s, min-height ease 0.5s, margin ease 0.5s;
 }
 .comments{
 	vertical-align: top;
@@ -501,6 +533,7 @@ input, select, textarea{
 	border-radius: 1vh;
 	transition: height ease 0.5s;
 	overflow-y: scroll;
+	transition: height ease 0.5s, min-height ease 0.5s;
 	&::-webkit-scrollbar {
 	  width: 1vh;
 	  -webkit-appearance: none;
@@ -1177,133 +1210,215 @@ input, select, textarea{
 	transition:opacity ease 0.5s;
 }
 
+
+
 /* PLAYER */
-#player-wrap{
-	vertical-align:top;
-	width: calc(79.5vh / 0.5625);
-	background:green;
-	height: 79.5vh;
-	margin: 10vh auto;
-	margin-left:1.5vh;
-	border: solid 1px #2d2d2d;
-	display: inline-block;
-	border-radius: 1vh;
-	background:black;
-	overflow: hidden;
-	position:relative;
-	box-sizing:border-box;
-	background:rgba(255,255,255,0.08);
-	text-align:cener;
-	font-size:1vh;
-}
-#player{
-	width: calc((79.5vh - 1.8vh) / 0.5625);
-	height: calc(79.5vh - 3vh);
-	margin:1.5vh;
-	padding:0;
-	box-sizing:border-box;
-	overflow:hidden;
-	border: solid 1px #2d2d2d;
-	display: inline-block;
-	border-radius: 1vh;
-	background:rgba(255,255,255,0.08);
-}
 #player-bar{
-	width:calc(100% - 1.5vh);
+	width:calc(100% - 3vh);
 	margin:1.5vh;
-	background:#282828;
+	background:#1D1D1D;
 	height:5vh;
+	max-height:5vh;
+	padding:0;
 	display:block;
 	overflow:hidden;
 	border-radius:1vh;
 	vertical-align:top;
 	position:relative;
+	box-sizing:border-box;
 	opacity:0;
-	filter:brightness(80%);
-	transition:opacity ease 0.5s;
-	iframe{
-		position:absolute;
-		bottom:calc((5vh - 46px) / 2);
-		height:150px;
-		overflow:hidden;
-		background:transparent;
-	}
-	.coverup{
-		position:absolute;
-		top:0;left:0;
-		height:5px;
-		width:80px;
-		background:#282828;
-		box-shadow:0 0 2px 2px #282828;
-	}
-	.coverup2{
-		position:absolute;
-		top:0;left:35px;
-		height:19px;
-		width:80px;
-		background:#282828;
-		box-shadow:0 0 2px 2px #282828;
-	}
-	.open-spotify-wrap{
-		position:absolute;
-			width:5vh;height:5vh;
-			background:rgba(0,0,0,0.01);
-			right:0;right:42px;
-			top:0;bottom:0;
-		.open-spotify{
-			position:absolute;
-			width:25px;height:25px;
-			background:grey;
-			right:calc((5vh - 25px) / 2);top:calc((5vh - 25px) / 2);
-			border-radius:50%;
-			user-select:none;
-			i{
-				color:#1ED760;
-				font-size:15px;
-				width:15px;
-				text-align:center;
-				display:inline-block;
-				line-height:15px;
-				padding:5px;
-			}
-		}
-	}
-	.play-overlay{
-		position:absolute;
-		right:3px;
-		width:40px;height:40px;
-		bottom:calc((5vh - 40px) / 2);
-		background:transparent;
-		pointer-events: none
-	}
-	.playing-prompt{
-		position:absolute;
-		right:0;left:0;top:0;bottom:0;
-		background:rgba(0,0,0,0.85);
+	display:none;
+	color:lightgrey;
+	font-size:0;
+	transition: opacity ease 0.5s, height ease 0.5s, max-height ease 0.5s, border ease 0.5s;
+	#controls{
 		width:100%;
 		height:5vh;
+		position:absolute;
+		left:0;right:0;bottom:0;
+		display:block;
+		vertical-align:top;
+		color:grey;
+		font-size:0;
+		
+		#scrub-bar{
+			width:calc(50% - 3vh);height:0.5vh;
+			margin:2.25vh  1.5vh;
+			background:#3d3d3d;
+			border-radius:0.25vh;
+			overflow:hidden;
+			box-sizing:border-box;
+			position:relative;
+			display:inline-block;
+			#scrub-fill{
+				position:absolute;
+				left:0;top:0;bottom:0;
+				height:0.5vh;width:34%;
+				background:grey;
+			}
+		}
+		#player-time{
+				vertical-align:top;
+				height:5vh;width:19%;
+				box-sizing:border-box;
+				display:inline-block;
+				overflow:hidden;
+				line-height:5vh;
+				font-size:1.3vh;
+				padding:0;
+				text-align:center;
+		}
+		#player-play{
+				display:inline-block;
+				height:5vh;width:19%;
+				box-sizing:border-box;
+				overflow:hidden;
+				vertical-align:top;
+				text-align:center;
+				.fa-play{
+					font-size:1.2vh;
+					line-height:3vh;
+					display:inline-block;
+					vertical-align:top;
+					height:3vh;width:3vh;
+					margin:1vh auto;
+					box-sizing:border-box;
+					padding-left:0.2vh;
+					color:#1d1d1d;
+					background:grey;
+					border-radius:50%;
+					text-align:center;
+				}
+				.fa-pause{
+					display:none;
+				}
+				.fa-expand{
+					font-size:1.5vh;
+					line-height:5vh;
+					display:inline-block;
+					vertical-align:top;
+					height:5vh;width:3vh;
+					margin:0 auto;
+					box-sizing:border-box;
+					color:grey;
+					border-radius:50%;
+					text-align:left;
+				}
+		}
+		#player-fast{
+				display:inline-block;
+				width:auto;height:5vh;
+				box-sizing:border-box;
+				vertical-align:top;
+				width:6%;
+				overflow:hidden;
+				text-align:center;
+				i{
+					line-height:5vh;
+					font-size:1.5vh;
+					display:block;
+					vertical-align:top;
+				}
+		}
+		#player-rewind{
+				display:inline-block;
+				width:auto;height:5vh;
+				box-sizing:border-box;
+				vertical-align:top;
+				width:6%;
+				overflow:hidden;
+				text-align:center;
+				i{
+					line-height:5vh;
+					font-size:1.5vh;
+					display:block;
+					vertical-align:top;
+					transform:rotate(180deg);
+				}
+		}
+	}
+	#playing-prompt{
+		position:absolute;
+		right:0px;left:0;top:0;bottom:0;
+		background:rgba(0,0,0,0.85);
+		width:100%;
+		box-sizing:border-box;
 		text-align:center;
+		border-radius:1vh;
 		pointer-events:none;
 		opacity:0;
 		transition:opacity ease 0.5s;
+		z-index:3000;
 		a{
 			display:inline-block;
 			font-size:1.4vh;
 			line-height:1.4vh;
 			margin:calc((5vh - 1.4vh) / 2) 0;
+			transition: margin ease 0.5s;
 		}
 		.yes, .no{
-			background:#3d3d3d;
-			margin:calc((5vh - 2vh) / 2) 0 calc((5vh - 2vh) / 2) 0.5vh;
+			background:#2d2d2d;
+			margin:calc((5vh - 2vh) / 2) 0 calc((5vh - 2vh) / 2) 1vh;
 			padding:0.3vh 0.8vh;
 			border-radius:1vh;
+			font-size:1.2vh;
+			vertical-align:top;
+			text-transform:uppercase;
 		}
 	}
-	z-index:2000;
-	display:none;
+	img{
+		display:none;
+	}
+	&.extended{
+		height: calc((100vw - 3vh) * 0.5625);
+		max-height:281.25px;
+		opacity:1;
+		#controls{
+			top:auto;
+			bottom:0;
+			opacity:1;
+			background:linear-gradient(transparent 2%,rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.5) 100%);
+		}
+		#playing-prompt{
+			a{
+				margin-top:calc((((100vw - 3vh) * 0.5625) / 2) - 1vh);
+			}
+			.yes, .no{
+				background:#2d2d2d;
+				margin-top:calc((((100vw - 3vh) * 0.5625) / 2) - 1.2vh);
+			}
+		}
+		img{
+			width:100%;
+			height:auto !important;
+			display:block;
+		}
+	}
+	&.extended ~ #container{
+		height:calc(76.5vh - ((100vw - 3vh) * 0.5625));
+	}
+	&.extended ~ #top-bar{
+		display:none;
+		opacity:0;
+	}
+	&.extended ~ #container .podcast.extended{
+		height:calc(75vh - ((100vw - 3vh) * 0.5625));
+	}
+	&.extended ~ #container .podcast .data-bar{
+		height:0;
+		opacity:0;
+	}
+	&.extended ~ #container .podcast .comments-wrap{
+		margin-top:0;
+		padding-top:0;
+		height:calc(61.7vh - ((100vw - 3vh) * 0.5625));
+	}
+	&.extended ~ #container .podcast .comments{
+		height:calc(61.7vh - ((100vw - 3vh) * 0.5625));
+	}
+	&.currently-playing{
+	
+		border:solid 1px rgba(196,130,16,1);
+	}
 }
 
-
-#root > div{
-	background:transparent;
-}

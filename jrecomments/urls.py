@@ -19,6 +19,7 @@ urlpatterns = [
     path('data/get-specific/podcast/<id>/', views.podcast, name='podcast'),
     path('data/master/<id>/comments/<amount>/<offset>/', views.comments_master, name='comments'),
     path('data/sub/<id>/comments/<amount>/<offset>/', views.comments_sub, name='comments'),
+    path('data/get-specific/user-data/<id>/', views.podcast_user_data, name='user-data'),
 
     # APP ACTIONS
     path('action/comment/<id>/', views.comment, name='comment'),
@@ -28,7 +29,7 @@ urlpatterns = [
     path('action/dislike/<id>/', views.dislike_comment, name='dislike'),
     path('action/login/', views.loginsignup, name='login'),
     path('action/logout/', views.logout_action, name='logout'),
-    path('action/request-token/', views.request_token, name='request_token'),
+    path('action/request-token/', views.request_token, name='request-token'),
 
 ]
 urlpatterns += staticfiles_urlpatterns()

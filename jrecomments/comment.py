@@ -4,9 +4,10 @@ import re
 import uuid
 import quickle
 from jrecomments.models import Podcast, Comment
+from jrecomments.userdata import add_comment_to_userdata
 
 
-def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
+def create_comment(podcast_id, username, comment_text, parent_id=0, reply_to_id=0):
 
     parent_id = try_int(parent_id)
     reply_to_id = try_int(reply_to_id)
@@ -37,11 +38,11 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
             return {'status': 'failed', 'reason': 'ParentId Invalid.'}
     if podcast != None:
         comment = Comment()
-        comment.name = name
+        comment.username = username
         comment.comment = comment_text
         comment.parent_id = parent_id
-        comment.datetime = datetime.datetime.utcnow()
-        comment.podcast = podcast_id
+        comment.date_time = datetime.datetime.utcnow()
+        comment.podcast_id = podcast_id
         comment.popularity = 1 + random.randrange(0, 100)
         comment.likes += 1
         reply_to = None
@@ -72,6 +73,9 @@ def create_comment(podcast_id, name, comment_text, parent_id=0, reply_to_id=0):
             add_to_sub_comment_cache(reply_to, comment.id)
         elif parent != None:
             add_to_sub_comment_cache(parent, comment.id)
+
+        add_comment_to_userdata(username, comment)
+
         return {'status': 'success', 'reason': 'None', 'commentId': comment.id}
     return {'status': 'failed', 'reason': 'Podcast not Found.'}
 
@@ -132,3 +136,14 @@ def try_int(value):
     except ValueError:
         return 0
 
+def comment_to_list(comment):
+    return {'id':comment.id,
+            'username': comment.username,
+            'comment':comment.comment,
+            'podcast': comment.podcast_id,
+            'master': comment.parent_id,
+            'replyToId': comment.reply_id,
+            'replyToName': comment.reply_username,
+            'datetime': comment.date_time,
+            'likes': comment.likes,
+            'subCount': comment.sub_count}

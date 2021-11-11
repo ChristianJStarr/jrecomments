@@ -64,6 +64,30 @@
             <div class="auth-wrap"><h3 id="username-preview">[ {{user.get_username }} ]</h3><h3 id="logout-button">[ LOGOUT ]</h3></div>
 
             <div id="container-wrap">
+                <div id="player-bar" class=" currently-playing">
+                    <img src="{% static 'img/jre.png' %}" alt="">
+                    <div id="playing-prompt">
+                        <a>Continue Playing?</a>
+                        <a class="yes">Yes</a>
+                        <a class="no">No</a>
+                    </div>
+                    <div id="controls">
+                        <a id="player-time">3:01:25</a>
+                        <div id="player-rewind">
+                            <i class="fa fa-forward"></i>
+                        </div>
+                        <div id="scrub-bar"><div id="scrub-fill"></div></div>
+                        <div id="player-fast">
+                            <i class="fa fa-forward"></i>
+                        </div>
+                        <div id="player-play">
+                            <i class="fas fa-expand player-expand"></i>
+                            <i class="fa fa-play"></i>
+                            <i class="fa fa-pause"></i>
+                        </div>
+                    </div>
+
+                </div>
                 <div id="top-bar">
                     <input type="text" name="search" id="search-bar" placeholder="Search Podcasts...">
                     <input type="submit" id="search-submit" value="SEARCH">
@@ -72,9 +96,9 @@
                         <option value="oldest">Oldest First</option>
                         <option value="popular">Most Popular</option>
                     </select>
-                </div>
-                <div id="player-bar">
-                    <iframe class="player" src="https://open.spotify.com/embed/episode/4kXNjrdi6b4KbjUg6WTrKC?utm_source=generator&amp;theme=0" scrolling="no" width="100%" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                </div><!--
+                <div id="player-barr">
+                    <iframe class="player" src="" scrolling="no" width="100%" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
                     <div class="coverup"></div><div class="coverup2"></div>
                     <div class="open-spotify-wrap">
                         <div class="open-spotify"><i class="fa fa-spotify"></i></div>
@@ -91,6 +115,9 @@
                         }
                     </style>
                 </div>
+                -->
+
+
                 <div id="nickname">
                     <div id="nickname-container">
                         <a class="title">LOGIN / SIGN UP</a>
@@ -101,7 +128,8 @@
                         <a class="cancel">CANCEL</a><a class="continue">CONTINUE</a>
                     </div>
                 </div>
-                <div id="container" class="no-scroll-bar">
+                <div id="container-filler"></div>
+                <div id="container" class="no-scroll-bar player-enableda">
                     <div id="loading-podcast">
                         <div class="dots">
                             <div class="circle c-1"></div>
