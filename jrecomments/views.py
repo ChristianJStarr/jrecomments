@@ -30,6 +30,7 @@ simulated_delay = 0.00
 #########################################
 
 # INDEX
+@cache_page(long_expire_cache)
 def index_views(request):
 
     ## EVERY DAY
@@ -51,11 +52,7 @@ def index_views(request):
     #save_comments(1731, 'QHQzoHolWvI', 250)
     #save_comments(1731, 'xq9h2FSNIYM', 250)
 
-
-    data = { 'total_comment_count': Comment.objects.all().count(),
-             'nickname': request.session.get('nickname'),
-             'liked': request.session.get('liked'),
-             'disliked': request.session.get('disliked')}
+    data = { 'total_comment_count': '864,952' }
     return render(request, 'main.html', data)
 
 # PRIVACY POLICY PAGE
