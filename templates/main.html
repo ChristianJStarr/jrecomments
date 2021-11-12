@@ -26,28 +26,35 @@
         <meta name="screen-orientation" content="portrait">
         <meta name="x5-orientation" content="portrait">
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+        <!-- Fonts -->
+        <style>
+          @font-face {
+                font-family: 'jre-reg';
+                font-style: normal;
+                font-weight: regular;
+                src: local('jre-reg'), url('{% static 'fonts/jre-reg.ttf' %}') format('truetype');
+          }
+          @font-face {
+                font-family: 'jre-bold';
+                font-style: normal;
+                font-weight: bold;
+                src: local('jre-bold'), url('{% static 'fonts/jre-bold.ttf' %}') format('truetype');
+          }
+        </style>
 
         <!-- CSS Styling -->
-        <link rel="stylesheet" href="{% static 'css/reset.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
         <!-- Javascript -->
         <script type="text/javascript">
             window.CSRF_TOKEN = "{{ csrf_token }}";
             window.authenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
-            window.username = "{{ nickname }}";
-            window.liked = "{{ liked |safe}}";
-            window.disliked = "{{ disliked |safe}}";
+            window.analytics = {% if enable_google_analytics %}true{% else %}false{% endif %}
         </script>
-        <script src="{% static 'js/jquery.js' %}"></script>
         <script src="{% static 'js/jre-comments.js' %}"></script>
-        <script src="{% static 'js/md5.js' %}"></script>
-        <script src="{% static 'js/podcast.js' %}"></script>
 
         <!-- Google Analytics -->
+        {% if enable_google_analytics %}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-YZPFJLW0RX"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
@@ -56,6 +63,7 @@
 
           gtag('config', 'G-YZPFJLW0RX');
         </script>
+        {% endif %}
     </head>
     <body>
         <div id="particles"></div>
