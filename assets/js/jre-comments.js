@@ -11149,7 +11149,7 @@ function updatePodcastView(loadin=false){
             '<a class="name">{1}</a>' +
             '<span class="duration-preview">{2}</span>' +
             '<div class="play"><i class="icon-play"></i>PLAYER</div>' +
-            '<i class="icon-close close"></i>' +
+            '<i class="icon-times close"></i>' +
             '<div class="content"></div></div>';
         container.append(podcastDataFormat(podcastTemplate, podcast));
         objectsLoaded += 1;
@@ -11476,7 +11476,7 @@ function updateComment(podcastId, commentId){
 
 // Comment Input
 function setInputPop(podcastId, name, color){
-    var popTemplate = '<span class="pop" style="color:' + color + ';" contenteditable="false"><i class="icon-close" style="color:#4d4d4d;"></i>{0}</span>&nbsp;';
+    var popTemplate = '<span class="pop" style="color:' + color + ';" contenteditable="false"><i class="icon-times" style="color:#4d4d4d;"></i>{0}</span>&nbsp;';
     var commentInput = $('#podcast-' + podcastId).find('.comment-input');
     if(commentInput != null){
         var check = commentInput.find('.pop');
