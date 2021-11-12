@@ -30,7 +30,7 @@ simulated_delay = 0.00
 #########################################
 
 # INDEX
-@cache_page(urgent_expire_cache)
+#@cache_page(urgent_expire_cache)
 def index_views(request):
 
     ## EVERY DAY
