@@ -1,5 +1,5 @@
 from django.db import models
-
+import quickle
 
 
 class Podcast(models.Model):
@@ -12,6 +12,19 @@ class Podcast(models.Model):
     popularity = models.IntegerField(default=0)
     spotify_id = models.TextField(default='')
     youtube_links = models.BinaryField(default=None, null=True)
+
+    def to_quick_list(self):
+        total_comments = 0
+        if self.comments != None:
+            total_comments = len(quickle.loads(self.comments))
+        return {'id': self.id,
+                'name': self.name,
+                'duration': self.duration,
+                'date': self.date,
+                'comments': total_comments,
+                'score': self.score,
+                'popularity': self.popularity,
+                'spotify': self.spotify_id}
 
 
 class Comment(models.Model):

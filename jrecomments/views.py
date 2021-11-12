@@ -77,7 +77,7 @@ def podcasts(request):
     podcasts = Podcast.objects.all()
     for podcast in podcasts:
         if podcast != None:
-            output[podcast.id] = podcast_to_list(podcast)
+            output[podcast.id] = podcast.to_quick_list()
     return JsonResponse({'podcasts': output })
 
 # GET SPECIFIC PODCAST DATA

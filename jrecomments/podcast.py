@@ -116,12 +116,9 @@ def podcast_to_list(podcast, total_comments=None):
     if total_comments == None:
         total_comments = 0
     has_links = ''
-    if podcast.youtube_links != None:
-        youtube_links = quickle.loads(podcast.youtube_links)
-        if youtube_links != None and len(youtube_links) > 0:
-            has_links = ''
+
     return {'id':podcast.id,
-            'name': has_links + podcast.name,
+            'name': podcast.name,
             'duration':podcast.duration,
             'date':podcast.date,
             'comments':total_comments,

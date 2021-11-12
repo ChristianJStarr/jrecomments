@@ -45,7 +45,7 @@
             window.authenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
             window.analytics = {% if enable_google_analytics %}true{% else %}false{% endif %}
         </script>
-        <script src="{% static 'js/jre-comments.js' %}"></script>
+        <script src="{% static 'js/jre-comments.min.js' %}"></script>
 
         <!-- Google Analytics -->
         {% if enable_google_analytics %}
