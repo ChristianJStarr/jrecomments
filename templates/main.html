@@ -32,7 +32,14 @@
                 font-family: 'jre-reg';
                 font-style: normal;
                 font-weight: regular;
-                src: local('jre-reg'), url('{% static 'fonts/jre-reg-webfont.woff2' %}') format('woff2');
+                src: local('jre-reg'), url('{% static 'fonts/jre-font.woff2' %}') format('woff2');
+          }
+          @font-face {
+              font-family: 'icomoon';
+              src:  url('{% static 'fonts/jre-icons.woff' %}') format('woff');
+              font-weight: normal;
+              font-style: normal;
+              font-display: block;
           }
         </style>
 
@@ -76,16 +83,16 @@
                     <div id="controls">
                         <a id="player-time">3:01:25</a>
                         <div id="player-rewind">
-                            <i class="fa fa-forward"></i>
+                            <i class="icon-forward"></i>
                         </div>
                         <div id="scrub-bar"><div id="scrub-fill"></div></div>
                         <div id="player-fast">
-                            <i class="fa fa-forward"></i>
+                            <i class="icon-forward"></i>
                         </div>
                         <div id="player-play">
-                            <i class="fas fa-expand player-expand"></i>
-                            <i class="fa fa-play"></i>
-                            <i class="fa fa-pause"></i>
+                            <i class="icon-expand player-expand"></i>
+                            <i class="icon-play"></i>
+                            <i class="icon-pause"></i>
                         </div>
                     </div>
 
@@ -103,7 +110,7 @@
                     <iframe class="player" src="" scrolling="no" width="100%" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
                     <div class="coverup"></div><div class="coverup2"></div>
                     <div class="open-spotify-wrap">
-                        <div class="open-spotify"><i class="fa fa-spotify"></i></div>
+                        <div class="open-spotify"><i class="icon-spotify"></i></div>
                     </div>
                     <div class="playing-prompt">
                         <a>Continue Playing?</a>
@@ -151,7 +158,7 @@
                 </div>
             </div>-->
             <footer>
-                <h2>Made with <i class="fa fa-heart heart"></i> from Flint, MI</h2>
+                <h2>Made with <i class="icon-heart heart"></i> from Flint, MI</h2>
                 <div id="donate">
                     <a class="wallet-address copy-to-clipboard" address-data="bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf">bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
                     <a class="wallet-address copy-to-clipboard" address-data="0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66">0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
@@ -163,7 +170,7 @@
 
         <script>
             particlesJS.load('particles', '{% static 'particlesjs-config.json' %}', function() {
-                console.log('space particle simulation loaded.');
+
             });
         </script>
     </body>

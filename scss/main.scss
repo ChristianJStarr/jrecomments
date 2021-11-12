@@ -427,7 +427,7 @@ input, select, textarea{
 			line-height:5vh;
 			font-size:1vh;
 			padding-right:0.7vh;
-			&.fa-close{
+			&.icon-close{
 				font-size:1.5vh;
 			}
 		}
@@ -682,7 +682,7 @@ input, select, textarea{
 			padding-right: 1vh;
 		}
 		.com-like{
-			.fa-heart-broken{
+			.icon-heart-broken{
 				display:none;
 			}
 			i{
@@ -693,11 +693,11 @@ input, select, textarea{
 				color: $color-like;
 			}
 			&.liked:hover{
-				.fa-heart-broken{
+				.icon-heart-broken{
 					display:inline-block;
 					color:$color-like;
 				}
-				.fa-heart{
+				.icon-heart{
 					display:none;
 				}
 			}
@@ -879,7 +879,7 @@ input, select, textarea{
 			padding-right: 1vh;
 		}
 		.com-like{
-			.fa-heart-broken{
+			.icon-heart-broken{
 				display:none;
 			}
 			i{
@@ -890,11 +890,11 @@ input, select, textarea{
 				color: $color-like;
 			}
 			&.liked:hover{
-				.fa-heart-broken{
+				.icon-heart-broken{
 					display:inline-block;
 					color:$color-like;
 				}
-				.fa-heart{
+				.icon-heart{
 					display:none;
 				}
 			}
@@ -1285,7 +1285,7 @@ input, select, textarea{
 				overflow:hidden;
 				vertical-align:top;
 				text-align:center;
-				.fa-play{
+				.icon-play{
 					font-size:1.2vh;
 					line-height:3vh;
 					display:inline-block;
@@ -1299,10 +1299,10 @@ input, select, textarea{
 					border-radius:50%;
 					text-align:center;
 				}
-				.fa-pause{
+				.icon-pause{
 					display:none;
 				}
-				.fa-expand{
+				.icon-expand{
 					font-size:1.5vh;
 					line-height:5vh;
 					display:inline-block;
@@ -1432,3 +1432,83 @@ input, select, textarea{
 	}
 }
 
+
+
+
+
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-arrow-left:before {
+  content: "\e900";
+}
+.icon-arrow-right:before {
+  content: "\e901";
+}
+.icon-compress:before {
+  content: "\e902";
+}
+.icon-expand:before {
+  content: "\e903";
+}
+.icon-forward:before {
+  content: "\e904";
+}
+.icon-heart:before {
+  content: "\e905";
+}
+.icon-heart-broken:before {
+  content: "\e906";
+}
+.icon-play:before {
+  content: "\e907";
+}
+.icon-plus:before {
+  content: "\e908";
+}
+.icon-reply:before {
+  content: "\e909";
+}
+.icon-times:before {
+  content: "\e90a";
+}
+.icon-user:before {
+  content: "\e90b";
+}
+.icon-volume-down:before {
+  content: "\e90c";
+}
+.icon-volume-mute:before {
+  content: "\e90d";
+}
+.icon-volume-off:before {
+  content: "\e90e";
+}
+.icon-volume-up:before {
+  content: "\e90f";
+}
+.icon-calendar-alt:before {
+  content: "\e910";
+}
+.icon-clock:before {
+  content: "\e911";
+}
+.icon-comment:before {
+  content: "\e912";
+}
+.icon-trash-alt:before {
+  content: "\e913";
+}
