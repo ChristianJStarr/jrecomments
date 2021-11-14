@@ -1,0 +1,184 @@
+{% load static %}
+
+<html>
+
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link rel="stylesheet" href="{% static 'css/proto.css' %}">
+    <script src="{% static 'js/jquery.js' %}"></script>
+    <script src="{% static 'js/proto.js' %}"></script>
+    <style>
+          @font-face {
+                font-family: 'jre-reg';
+                font-style: normal;
+                font-weight: regular;
+                src: local('jre-reg'), url('{% static 'fonts/jre-font.woff2' %}') format('woff2');
+          }
+          @font-face {
+              font-family: 'icomoon';
+              src:  url('{% static 'fonts/jre-icons.woff' %}') format('woff');
+              font-weight: normal;
+              font-style: normal;
+              font-display: block;
+          }
+        </style>
+</head>
+
+<body>
+<div id="wrap">
+    <!-- PAGE NAV -->
+    <nav class="authenticated">
+        <h1>[ THE UNOFFICIAL JRE COMMENT SECTION  ]</h1>
+        {% if user.is_authenticated or True%}
+        <div class="auth-wrap">
+            <a id="username-preview">[ {{ user.get_username }}CHRISTIAN STARR ]</a>
+            <a id="logout-button">[ LOGOUT ]</a>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- LOADING SPINNER -->
+    <div id="b-wrap">
+        <div id="load-spin"></div>
+        <div id="load-cover"></div>
+    </div>
+
+    <!-- PARTICLES LAYER -->
+    <div id="particle"></div>
+    <script>
+            particlesJS.load('particle', '{% static 'particlesjs-config.json' %}', function() {
+
+            });
+    </script>
+
+
+    <!-- PODCASTS -->
+    <div id="main">
+        <div id="top-bar">
+            <input type="text" placeholder="SEARCH PODCASTS...">
+            <a class="search">SEARCH</a>
+            <a class="sort">MOST POPULAR</a>
+        </div>
+        <div id="pods">
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+            <div class="pod populated">
+                <a class="id">#1732</a>
+                <a class="name">Bert Chrysler</a>
+                <a class="dur">3h21m</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE FOOTER -->
+    <footer>
+
+    </footer>
+</div>
+</body>
+
+</html>

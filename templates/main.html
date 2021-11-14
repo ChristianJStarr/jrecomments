@@ -52,7 +52,8 @@
             window.authenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
             window.analytics = {% if enable_google_analytics %}true{% else %}false{% endif %}
         </script>
-        <script src="{% static 'js/jre-comments.min.js' %}"></script>
+        <script src="{% static 'js/jre-comments.js' %}"></script>
+        <script src="{% static 'js/podcast.js' %}"></script>
 
         <!-- Google Analytics -->
         {% if enable_google_analytics %}
@@ -67,12 +68,42 @@
         {% endif %}
     </head>
     <body>
-        <div id="particles"></div>
-        <div id="wrapper" class="{% if user.is_authenticated %}authenticated{% endif %}">
-            <h1>[ THE UNOFFICIAL JRE COMMENT SECTION  ]</h1>
-            <div class="auth-wrap"><h3 id="username-preview">[ {{user.get_username }} ]</h3><h3 id="logout-button">[ LOGOUT ]</h3></div>
+        <div id="wrap">
+            <!-- PAGE NAV -->
+            <nav  class="{% if user.is_authenticated %}authenticated{% endif %}">
+                <h1>[ THE UNOFFICIAL JRE COMMENT SECTION  ]</h1>
+                {% if user.is_authenticated or True%}
+                <div class="auth-wrap">
+                    <a id="username-preview">[ {{ user.get_username }}CHRISTIAN STARR ]</a>
+                    <a id="logout-button">[ LOGOUT ]</a>
+                </div>
+                {% endif %}
+            </nav>
 
-            <div id="container-wrap">
+            <!-- LOADING SPINNER -->
+            <div id="load">
+                <div id="load-spin"></div>
+                <div id="load-cover"></div>
+            </div>
+
+            <!-- PARTICLES LAYER -->
+            <div id="particle"></div>
+            <script>
+                    particlesJS.load('particle', '{% static 'particlesjs-config.json' %}', function() {
+
+                    });
+            </script>
+
+            <!-- CONTAINER -->
+            <div id="main">
+                <!-- PRIMARY TOP BAR (SEARCH/SORT PODCASTS) -->
+                <div id="top-bar">
+                    <input type="text" placeholder="SEARCH PODCASTS...">
+                    <a class="search">SEARCH</a>
+                    <a class="sort">MOST POPULAR</a>
+                </div>
+
+                <!-- PODCAST PLAYER BAR -->
                 <div id="player-bar" class=" currently-playing">
                     <img src="" alt="">
                     <div id="playing-prompt">
@@ -97,36 +128,8 @@
                     </div>
 
                 </div>
-                <div id="top-bar">
-                    <input type="text" name="search" id="search-bar" placeholder="Search Podcasts...">
-                    <input type="submit" id="search-submit" value="SEARCH">
-                    <select name="" id="sort">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="popular">Most Popular</option>
-                    </select>
-                </div><!--
-                <div id="player-barr">
-                    <iframe class="player" src="" scrolling="no" width="100%" height="232" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
-                    <div class="coverup"></div><div class="coverup2"></div>
-                    <div class="open-spotify-wrap">
-                        <div class="open-spotify"><i class="icon-spotify"></i></div>
-                    </div>
-                    <div class="playing-prompt">
-                        <a>Continue Playing?</a>
-                        <a class="yes">Yes</a>
-                        <a class="no">No</a>
-                    </div>
 
-                    <style>
-                        #root > div{
-                        	background:transparent;
-                        }
-                    </style>
-                </div>
-                -->
-
-
+                <!-- LOGIN / SIGNUP -->
                 <div id="nickname">
                     <div id="nickname-container">
                         <a class="title">LOGIN / SIGN UP</a>
@@ -137,41 +140,77 @@
                         <a class="cancel">CANCEL</a><a class="continue">CONTINUE</a>
                     </div>
                 </div>
-                <div id="container-filler"></div>
-                <div id="container" class="no-scroll-bar player-enableda">
-                    <div id="loading-podcast">
-                        <div class="dots">
-                            <div class="circle c-1"></div>
-                            <div class="circle c-2"></div>
-                            <div class="circle c-3"></div>
-                        </div>
-                        <h3>Loading Podcasts</h3>
+
+                <!-- PODCASTS VIEWPORT -->
+                <div id="pods" >
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
+                    </div>
+                    <div class="pod">
+                        <a class="id"></a>
+                        <a class="name"></a>
+                        <a class="dur"></a>
                     </div>
                 </div>
             </div>
-            <!--<div id="player-wrap">
-                <div id="player">
-                </div>
-                <div id="player-bottom">
-                    <a>#0000 PODCAST TITLE</a>
-                    <p>PODCAST DESCRIPTION</p>
-                </div>
-            </div>-->
+
+            <!-- FOOTER -->
             <footer>
                 <h2>Made with <i class="icon-heart heart"></i> from Flint, MI</h2>
                 <div id="donate">
-                    <a class="wallet-address copy-to-clipboard" address-data="bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf">bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
-                    <a class="wallet-address copy-to-clipboard" address-data="0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66">0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
-                </div>
+                        <a class="wallet-address copy-to-clipboard" address-data="bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf">bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
+                        <a class="wallet-address copy-to-clipboard" address-data="0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66">0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
+                    </div>
                 <a class="links" href="{% url 'privacy'%}">Privacy Policy</a>
                 <a class="links" href="{% url 'terms'%}">Terms & Conditions</a>
             </footer>
         </div>
-
-        <script>
-            particlesJS.load('particles', '{% static 'particlesjs-config.json' %}', function() {
-
-            });
-        </script>
     </body>
 </html>

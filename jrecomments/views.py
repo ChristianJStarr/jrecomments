@@ -22,7 +22,7 @@ auto_update_expire = 15
 urgent_expire_cache = 60 # 1 Minute
 
 # SIMULATED REQUEST DELAY
-simulated_delay = 0.00
+simulated_delay = 1.00
 
 
 #########################################
@@ -55,6 +55,10 @@ def index_views(request):
     data = { 'total_comment_count': '864,952' }
     return render(request, 'main.html', data)
 
+def proto(request):
+    return render(request, 'proto.html', {'data': None})
+
+
 # PRIVACY POLICY PAGE
 @cache_page(long_expire_cache)
 def privacy_views(request):
@@ -70,7 +74,7 @@ def terms_views(request):
 #########################################
 
 # GET ALL PODCAST DATA
-@cache_page(default_expire_cache)
+#@cache_page(default_expire_cache)
 def podcasts(request):
     sleep(simulated_delay)
     output = {}

@@ -10,6 +10,7 @@ def trigger_error(request):
 
 urlpatterns = [
     path('', views.index_views, name='index'),
+    path('proto/', views.proto, name='proto'),
     path('privacy/', views.privacy_views, name='privacy'),
     path('termsofservice/', views.terms_views, name='terms'),
     path('sentry-debug/', trigger_error),

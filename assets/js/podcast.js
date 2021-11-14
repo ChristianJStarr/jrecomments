@@ -1,15 +1,15 @@
-var max_allowed_opened = 1;
 var max_podcasts_initial = 20;
 var max_podcasts_loadin = 20;
 var max_comments_intial = 20;
-var opened = [];
+var opened = 0;
+var lastOpened = 0;
 var podcasts = {};
+var loaded_podcasts = [];
 var comment_cache = {};
 var userdatas = {};
 var liked;
 var disliked;
-
-
+var canClick = true;
 var search = '';
 var sort = 'newest';
 var hitBottom = false;
@@ -19,7 +19,6 @@ var lastObjIndex = 0;
 var shouldClearStrength = 0;
 var clearAwayObjects = 100;
 var clearing = false;
-
 var currentSearch = '';
 
 var playing = false;
@@ -27,21 +26,16 @@ var playingId = 0;
 var playerSrc = 'https://open.spotify.com/embed/episode/{0}?utm_source=generator&theme=0';
 var currentPlayingGlowInterval;
 
-
 var commentsLoaded = 0;
 var currentReplyId = 0;
 
 
-
-//#####################################//
-//          HTML TEMPLATES             //
-//#####################################//
-
+//<editor-fold desc="HTML TEMPLATES">
 var comment_com_bar = '<div class="com-bar">' +
     '<a class="com-date">{9}</a>' +
-    '<a class="com-like"><i class="fa fa-heart"></i><i class="fa fa-heart-broken"></i>{10}</a>' +
-    '<a class="com-comment"><i class="far fa-comment"></i>{11}</a>' +
-    '<a class="com-reply"><i class="fas fa-reply"></i>Reply</a></div>';
+    '<a class="com-like"><i class="icon-heart"></i>{10}</a>' +
+    '<a class="com-comment"><i class="icon-comment"></i>{11}</a>' +
+    '<a class="com-reply"><i class="icon-reply"></i>Reply</a></div>';
 //0-'id'
 //1-'name'
 //2-'nameColor'
@@ -62,7 +56,7 @@ var spotify_web_template = '<iframe' +
 
 var sub_comment_template = '<div class="com-sub" id="{0}" podcastId="{4}" masterId="{5}" replyToId="{6}" date="{12}">' +
     '<a class="com-text">' +
-    '<i class="com-name-wrap"><i class="fa fa-heart com-donor"></i>' +
+    '<i class="com-name-wrap"><i class="icon-heart com-donor"></i>' +
     '<span class="com-name" style="color:{2};">{1}</span></i>' +
     '{3}</a>' +
     comment_com_bar + '</div>';
@@ -71,45 +65,39 @@ var sub_comment_template_deep = '<div class="com-sub" id="{0}" podcastId="{4}" m
     '<a class="com-text">' +
     '<div class="com-reply-top">' +
     '<span class="com-name-reply" style="color:{2};">{1}</span>' +
-    '<i class="fa fa-arrow-right split"></i>' +
+    '<i class="icon-arrow-right split"></i>' +
     '<span class="com-name-reply" style="color:{8};">{7}</span></i></div>' +
-    '<i class="com-name-wrap"><i class="fa fa-heart com-donor"></i>' +
+    '<i class="com-name-wrap"><i class="icon-heart com-donor"></i>' +
     '<span class="com-name" style="color:{2};">{1}</span></i>' +
     '{3}</a>' +
     comment_com_bar + '</div>';
 
 var comment_template = '<div class="com" id="{0}" podcastId="{4}" masterId="{5}" replyToId="6" date="{12}">' +
     '<a class="com-text">' +
-    '<i class="com-name-wrap"><i class="fa fa-heart com-donor"></i>' +
+    '<i class="com-name-wrap">' +
     '<span class="com-name" style="color:{2};">{1}</span></i>' +
-    '{3}</a>' +
+    '{3}<span class="text-place"></span></a>' +
     comment_com_bar +
     '<div class="com-subs"></div></div>';
 
-var dataBar = '<div class="data-bar"><a><i class="far fa-calendar-alt"></i><span>{0}</span></a>' +
-    '<a><i class="far fa-clock"></i><span>{1}</span></a>' +
-    '<a><i class="fa fa-heart"></i><span class="score-total">{2}</span></a>' +
-    '<a><i class="far fa-comment"></i><span class="comment-total">{3}</span></a></div>';
+var name_wrap_template = '<i class="com-name-wrap"><span class="com-name" style="color:{2};">{1}</span></i>';
 
-var commentInputTemplate = '<div class="comment"><a class="comment-max-char"></a>' +
-    '<a class="comment-input" contenteditable="true" name="comment" maxlength="250" placeholder="Write a comment!" required></a>' +
+
+var dataBar = '<div class="data-bar"><a><i class="icon-calendar-alt"></i><span>{0}</span></a>' +
+    '<a><i class="icon-clock"></i><span>{1}</span></a>' +
+    '<a><i class="icon-heart"></i><span class="score-total">{2}</span></a>' +
+    '<a><i class="icon-comment"></i><span class="comment-total">{3}</span></a></div>';
+
+var commentInputTemplate = '<div class="commenter"><a class="comment-max-char">0</a>' +
+    '<a class="comment-input" contenteditable="true"></a>' +
     '<input class="comment-submit" type="submit" value="">' +
-    '<i class="fa fa-arrow-right submit"></i></div>';
+    '<i class="icon-arrow-right submit"></i></div>';
 
-var loadingCommentsTemplate = '<div class="loading-comments">' +
-    '<div class="dots">' +
-    '<div class="circle c-1"></div>' +
-    '<div class="circle c-2"></div>' +
-    '<div class="circle c-3"></div></div>' +
-    '<h3>Loading Comments</h3></div>'
-
-var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments no-scroll-bar-com">' + loadingCommentsTemplate + '</div></div>';
+var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments"></div></div>';
+//</editor-fold>
 
 
-//#####################################//
-//               STARTUP               //
-//#####################################//
-
+//<editor-fold desc="STARTUP">
 $(document).ready(function(){
     //Request podcast data
     getPodcastData();
@@ -125,11 +113,10 @@ $(document).ready(function(){
     //Initial Stylings
     $('#top-bar').addClass('make-visible');
 });
+//</editor-fold>
 
 
-//#####################################//
-//          EMBEDDED PLAYER            //
-//#####################################//
+//<editor-fold desc="EMBEDDED PLAYER">
 
 function enablePlayer(podcastId){
     //$('.player').attr('src', playerSrc.format(podcasts[podcastId].spotify));
@@ -176,11 +163,10 @@ function currentPlayingGlow(podcastId){
         }, 2500);
     },4000);
 }
+//</editor-fold>
 
 
-//#####################################//
-//            PODCAST DATA             //
-//#####################################//
+//<editor-fold desc="PODCAST DATA">
 
 // Get All Podcast Data
 function getPodcastData(){
@@ -189,8 +175,7 @@ function getPodcastData(){
 
 // Update Podcast Viewport with Data
 function updatePodcastView(loadin=false){
-    togglePodcastLoadScreen(false);
-    var container = $('#container');
+    var pods = $('#pods');
     var amountToAdd = max_podcasts_initial;
     if(loadin){
         amountToAdd = max_podcasts_loadin;
@@ -198,8 +183,6 @@ function updatePodcastView(loadin=false){
     else{
         addonOffset = 0;
         objectsLoaded = 0;
-        container.text('');
-        $('#container').animate({scrollTop: 0}, 'fast');
     }
     //Get All Podcasts
     var view = Object.keys(podcasts).map(function(key){return podcasts[key];});
@@ -229,19 +212,79 @@ function updatePodcastView(loadin=false){
     //Apply Limit
     view = view.slice(addonOffset, amountToAdd + addonOffset);
     addonOffset += amountToAdd;
-    $.each(view, function (index, podcast){
-        var podcastTemplate = '<div class="podcast" id="podcast-{0}">' +
-            '<div class="podcast-click"></div>' +
-            '<a class="id">{0}</a>' +
-            '<a class="name">{1}</a>' +
-            '<span class="duration-preview">{2}</span>' +
-            '<div class="play"><i class="fa fa-play"></i>PLAYER</div>' +
-            '<i class="fa fa-close close"></i>' +
-            '<div class="content"></div></div>';
-        container.append(podcastDataFormat(podcastTemplate, podcast));
-        objectsLoaded += 1;
-    });
+    drawPodcastsToViewport(pods, view);
 }
+var podcastTemplate = '<div class="pod" id="podcast-{0}" podcastId="{0}"><a class="id">{0}</a><a class="name">{1}</a><a class="dur">{2}</a></div>'
+
+// Draw to Podcast Viewport
+function drawPodcastsToViewport(pods, podcastData){
+    var existingPods = pods.children();
+    var existingCount = existingPods.length;
+    var dataCount = podcastData.length;
+
+    toggleLoadRing(false);
+    if(existingCount > dataCount){
+        var count = 0;
+        $.each(podcastData, function(index, podcast){
+            var pod = $(existingPods[count]);
+            pod.find('.id').text(podcast.id);
+            pod.find('.name').text(podcast.name);
+            pod.find('.dur').text(podcast.duration);
+            pod.attr('id', 'podcast-' + podcast.id);
+            pod.attr('podcastId', podcast.id);
+            count += 1;
+        });
+        for(x=count;x<existingCount;x++){
+            existingPods[x].remove();
+            objectsLoaded -= 1;
+        }
+        $('#pods .pod').addClass('populated');
+    }
+    else if(existingCount < dataCount){
+        if(existingCount > 0){
+            var count = 0;
+            $.each(podcastData, function(index, podcast){
+                if(count < existingCount){
+                    var pod = $(existingPods[count]);
+                    pod.find('.id').text(podcast.id);
+                    pod.find('.name').text(podcast.name);
+                    pod.find('.dur').text(podcast.duration);
+                    pod.attr('id', 'podcast-' + podcast.id);
+                    pod.attr('podcastId', podcast.id);
+                    count += 1;
+                }
+                else{
+                    pods.append(podcastTemplate.format(podcast.id, podcast.name, podcast.duration));
+                    objectsLoaded += 1;
+                }
+            });
+        }
+        else{
+            pods.text('');
+            $.each(podcastData, function (index, podcast){
+                pods.append(podcastTemplate.format(podcast.id, podcast.name, podcast.duration));
+                objectsLoaded += 1;
+            });
+        }
+        $('#pods .pod').addClass('populated');
+    }
+    else{
+        var count = 0;
+        $.each(podcastData, function(index, podcast){
+            var pod = $(existingPods[count]);
+            pod.find('.id').text(podcast.id);
+            pod.find('.name').text(podcast.name);
+            pod.find('.dur').text(podcast.duration);
+            pod.attr('id', 'podcast-' + podcast.id);
+            pod.attr('podcastId', podcast.id);
+            count += 1;
+        });
+        $('#pods .pod').addClass('populated');
+    }
+    loaded_podcasts = $('#pods').children().toArray();
+    hideAllPodcastsExceptVisible();
+}
+
 function podcastDataFormat(template, podcast){
     return template.format(podcast.id, podcast.name, podcast.duration, podcast.date, podcast.comments, podcast.score, podcast.popularity);
 }
@@ -271,20 +314,18 @@ function updateCurrentPodcastData(){
         waRequestSpecificPodcastData(getPodcastId(opened[0]));
     }
 }
+//</editor-fold>
 
-//#####################################//
-//               PODCASTS              //
-//#####################################//
+
+//<editor-fold desc="PODCASTS">
 
 // Enable/Disable Podcast Loading Screen
-function togglePodcastLoadScreen(visible){
+function toggleLoadRing(visible){
     if(visible){
-        $('#loading-podcast').show();
-        enableLoadSequence();
+        $('#load').addClass('enabled');
     }
     else{
-        $('#loading-podcast').hide();
-        disableLoadSequence();
+        $('#load').removeClass('enabled');
     }
 }
 
@@ -292,114 +333,127 @@ function togglePodcastLoadScreen(visible){
 function turnOn(podcast){
     var podcastId = getPodcastId(podcast);
     var podcastData = podcasts[podcastId];
-    var content = podcast.find('.content');
 
-    var removal = 0;
-    if(opened.length >= max_allowed_opened){
-        removal = clearOpened(podcast);
+    // Close Opened Podcasts
+    if(lastOpened !== 0 && lastOpened !== podcastId){
+        clearOpened();
     }
-    scrollTo(podcast, removal);
+    console.log(opened);
+
+    //Scroll to This Podcast
+    scrollTo(podcast);
 
     // Player
-    var playbtn = podcast.find('.play i');
-    if(playbtn != undefined && playing){
-        var play = podcast.find('.play');
-        if(playingId === podcastId){
-            playbtn.removeClass('fa-play');
-            playbtn.addClass('fa-close');
-        }
-        else{
-            playbtn.addClass('fa-play');
-            playbtn.removeClass('fa-close');
-        }
-    }
-    else if(playbtn != undefined){
-        playbtn.addClass('fa-play');
-    }
+    //var playbtn = podcast.find('.play i');
+    //if(playbtn != undefined && playing){
+     //   var play = podcast.find('.play');
+       // if(playingId === podcastId){
+       //     playbtn.removeClass('fa-play');
+     //       playbtn.addClass('fa-close');
+        //}
+        //else{
+           // playbtn.addClass('fa-play');
+            //playbtn.removeClass('fa-close');
+        //}
+    //}
+    //else if(playbtn != undefined){
+      //  playbtn.addClass('fa-play');
+    //}
 
     // BUILD PODCAST
-    content.text('');
-    var date = new Date(podcastData.date);
-    date = date.getMonth() + '/' + date.getDay() + '/' + date.getFullYear().toString().substr(2);
-    content.append(dataBar.format(date, podcastData.duration, nFormatter(podcastData.score), nFormatter(podcastData.comments)));
-    content.append(commentsWrapTemplate);
-    content.append(commentInputTemplate);
-
+    var content = podcast.find('.content');
+    if(content.length == 0){
+        podcast.append('<div class="content"><i class="icon-times close"></i></div>');
+        content = podcast.find('.content');
+        var date = new Date(podcastData.date);
+        date = date.getMonth() + '/' + date.getDay() + '/' + date.getFullYear().toString().substr(2);
+        content.append(dataBar.format(date, podcastData.duration, nFormatter(podcastData.score), nFormatter(podcastData.comments)));
+        content.append(commentsWrapTemplate);
+        var comments = content.find('.comments');
+        comments.append(comment_template + comment_template + comment_template + comment_template + comment_template);
+        content.append(commentInputTemplate);
+    }
+    content.removeClass('hidden');
     // EXTEND PODCAST
     podcast.addClass('extended');
-    podcast.find('.comment-max-char').text('0');
 
+    // Check if Logged In
     if(isLoggedIn()){
+        // Grab Podcast Specific UserData then Get Comments For This Podcast
+        toggleLoadRing(true);
         waRequestUserDataProcComments(podcastId)
     }else{
         // Get Comments For This Podcast
+        toggleLoadRing(true);
         getCommentsMaster(podcastId, max_comments_intial, 0);
     }
-    opened.push(podcast);
+
+    // Lock the Podcast Viweport
     setTimeout(function (){
-        $('#container').css('overflow', 'hidden');
+        $('#pods').addClass('locked');
     },500);
-    gtag('event','open_podcast', {
-        "id": podcastId,
-        "name": podcastData[1]
-    });
+
+    // Google Analytics
+    if(window.analytics){
+        gtag('event','open_podcast', {
+            "id": podcastId,
+            "name": podcastData[1]
+        });
+    }
+
+    opened = podcastId;
+
 }
 function turnOff(podcast){
-    if(playing){
-        $('#playing-prompt').css('opacity', 1);
-        $('#playing-prompt').css('pointer-events', 'auto');
-    }
+    //if(playing){
+        //$('#playing-prompt').css('opacity', 1);
+        //$('#playing-prompt').css('pointer-events', 'auto');
+    //}
     var podcastId = getPodcastId(podcast);
-    var podcastData = podcasts[podcastId];
+    // Un-Extend Podcast
     podcast.removeClass('extended');
-    setTimeout(function (){
-        podcast.find('.content').text('');
-    }, 500);
-    $('#container').css('overflow-y', 'scroll');
-    gtag('event','close_podcast', {
-        "id": podcastId,
-        "name": podcastData[1]
-    });
+    toggleLoadRing(false);
+    var content = podcast.find('.content');
+    if(content.length != 0){
+        content.addClass('hidden');
+    }
+
+    // Unlock Podcast Viewport
+    $('#pods').removeClass('locked');
+    //scrollTo(podcast);
+    // Google Analytics
+    if(window.analytics) {
+        gtag('event', 'close_podcast', {
+            "id": podcastId,
+            "name": podcastData[1]
+        });
+    }
+    lastOpened = opened;
+    opened = 0;
 }
-function removeFromOpened(podcast){
-    if(opened.length > 0){
-        var newopen = [];
-        for(i=0;i<opened.length;i++){
-            if(opened[i].id != podcast.id){
-                newopen.push(opened[i]);
-            }
+
+function clearOpened(){
+    var toClear = $('#podcast-' + opened);
+    if(toClear !== undefined){
+        toClear = toClear.find('.content');
+        if(toClear !== undefined){
+            toClear.remove();
+            console.log('removed');
         }
-        opened = newopen;
     }
 }
-function clearOpened(podcast){
-    var removal = 0;
-    var offset = podcast.offset().top;
-    if(opened.length > 0){
-        for(i=0;i<opened.length;i++){
-            if(opened[i].offset().top < offset){
-                removal += 1;
-            }
-            turnOff(opened[i]);
-        }
-        opened = [];
-        var onevh = $(window).height() / 100;
-        return removal * (onevh * 72);
-    }
-    return 0;
-}
-function scrollTo(selector, removal) {
+function scrollTo(selector) {
     var offset = selector.offset();
-    var $main = $('#container');
+    var $main = $('#pods');
+    var vh = ($(window).height() / 100) * 1.5;
     $main.animate({
-        scrollTop: offset.top - ($main.offset().top - $main.scrollTop()) - removal
+        scrollTop: offset.top - ($main.offset().top - $main.scrollTop()) - vh
     }, "fast");
 }
+//</editor-fold>
 
 
-//#####################################//
-//             COMMENTING              //
-//#####################################//
+//<editor-fold desc="COMMENTING">
 
 // Comment Updating
 function getCommentsMaster(podcastId, amount, offset){
@@ -410,7 +464,7 @@ function getCommentsMaster(podcastId, amount, offset){
         url: pageUrl,
         dataType: 'json',
         success: function (data) {
-            updateCommentDisplay(podcastId,data.comments, data.comments_total, Object.keys(data.comments).length, false);
+            drawCommentsToViewport(podcastId,data.comments, data.comments_total, Object.keys(data.comments));
         },
         error: function (error){
             console.log(error);
@@ -456,6 +510,111 @@ function getCommentsSub(commentId, amount, offset){
         }
     });
 }
+
+
+function drawCommentsToViewport(podcastId, commentData, loadCount, totalCount){
+    var podcast = getPodcast(podcastId);
+    if(podcast !== undefined){
+        var content = podcast.find('.comments');
+        var existingComs = content.children();
+        var existingCount = existingComs.length;
+        toggleLoadRing(false);
+        if(existingCount > loadCount){
+            var count = 0;
+            // Re-populate Existing Coms with Data
+            $.each(commentData, function(index, comment){
+                var com = $(existingComs[count]);
+                var text = com.find('.com-text');
+                var comBar = com.find('.com-bar');
+                com.attr('id', comment.id);
+                com.attr('podcastId', comment.podcast);
+                com.attr('masterId', comment.master);
+                com.attr('replyToId', comment.replyToId);
+                com.attr('date', comment.datetime);
+                text.html(name_wrap_template.format(comment.name, comment.nameColor));
+                text.append(comment.comment + '<span class="text-place"></span>');
+                comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
+                comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
+                comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
+                com.find('.com-subs').text('');
+                count += 1;
+            });
+
+            // Remove Extra Existing Coms
+            for(x=count;x<existingCount;x++){
+                existingComs[x].remove();
+                commentsLoaded -= 1;
+            }
+            // Make Coms Visible
+            $('.com').addClass('populated');
+        }
+        else if(existingCount < loadCount){
+            if(existingCount > 0){
+                var count = 0;
+                // Re-populate Existing Coms & Create New Coms with Data
+                $.each(commentData, function(index, comment){
+                    if(count < existingCount){
+                        var com = $(existingComs[count]);
+                        var text = com.find('.com-text');
+                        var comBar = com.find('.com-bar');
+                        com.attr('id', comment.id);
+                        com.attr('podcastId', comment.podcast);
+                        com.attr('masterId', comment.master);
+                        com.attr('replyToId', comment.replyToId);
+                        com.attr('date', comment.datetime);
+                        text.html(formatComment(name_wrap_template, comment));
+                        text.append(comment.comment + '<span class="text-place"></span>');
+                        comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
+                        comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
+                        comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
+                        com.find('.com-subs').text('');
+                        count += 1;
+                    }
+                    else{
+                        content.append(formatComment(comment_template, comment));
+                        commentsLoaded += 1;
+                    }
+
+                });
+            }
+            else{
+                content.text('');
+                // Create and Append Coms
+                $.each(commentData, function (index, comment){
+                    content.append(formatComment(comment_template, comment));
+                    commentsLoaded += 1;
+                });
+            }
+            // Make Coms Visible
+            $('.com').addClass('populated');
+        }
+        else{
+            var count = 0;
+            // Re-populate Existing Coms with Data
+            $.each(commentData, function(index, comment){
+                var com = $(existingComs[count]);
+                var text = com.find('.com-text');
+                var comBar = com.find('.com-bar');
+                com.attr('id', comment.id);
+                com.attr('podcastId', comment.podcast);
+                com.attr('masterId', comment.master);
+                com.attr('replyToId', comment.replyToId);
+                com.attr('date', comment.datetime);
+                text.html(name_wrap_template.format(comment.name, comment.nameColor));
+                text.append(comment.comment + '<span class="text-place"></span>');
+                comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
+                comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
+                comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
+                com.find('.com-subs').text('');
+                count += 1;
+            });
+            // Make Coms Visible
+            $('.com').addClass('populated');
+        }
+    }
+}
+
+
 function updateCommentDisplay(id, comments,  potential_comments, total_comments, subComment=false){
     var podcastId,podcast;
     var masterId,master,replyToId, replyToName, replyToColor;
@@ -493,20 +652,7 @@ function updateCommentDisplay(id, comments,  potential_comments, total_comments,
         if(subComment){
             if(comment.replyToId !== 0 && comment.replyToId !== comment.master){
                 commentSection.append(formatComment(sub_comment_template_deep, comment));
-                //0-'id'
-                //1-'name'
-                //2-'nameColor'
-                //3-'donor'
-                //4-'comment'
-                //5-'podcast'
-                //6-'master'
-                //7-'replyToId'
-                //8-'replyToName'
-                //9-'replyToColor'
-                //10-'user'
-                //11-'datetime'
-                //12-'likes'
-                //13-'dislikes'
+
             }else{
                 commentSection.append(formatComment(sub_comment_template, comment));
             }
@@ -528,6 +674,20 @@ function updateCommentDisplay(id, comments,  potential_comments, total_comments,
 
 }
 function formatComment(commentTemplate, comment){
+    //0-'id'
+    //1-'name'
+    //2-'nameColor'
+    //3-'donor'
+    //4-'comment'
+    //5-'podcast'
+    //6-'master'
+    //7-'replyToId'
+    //8-'replyToName'
+    //9-'replyToColor'
+    //10-'user'
+    //11-'datetime'
+    //12-'likes'
+    //13-'dislikes'
     return commentTemplate.format(comment.id,
         comment.username,
         stringToColor(comment.username),
@@ -558,7 +718,7 @@ function updateComment(podcastId, commentId){
 
 // Comment Input
 function setInputPop(podcastId, name, color){
-    var popTemplate = '<span class="pop" style="color:' + color + ';" contenteditable="false"><i class="fa fa-close" style="color:#4d4d4d;"></i>{0}</span>&nbsp;';
+    var popTemplate = '<span class="pop" style="color:' + color + ';" contenteditable="false"><i class="icon-times" style="color:#4d4d4d;"></i>{0}</span>&nbsp;';
     var commentInput = $('#podcast-' + podcastId).find('.comment-input');
     if(commentInput != null){
         var check = commentInput.find('.pop');
@@ -680,7 +840,7 @@ function addToCommentLikes(commentId, amount){
     }else{
         points = parseInt(points);
         points += amount;
-        comment.find('.com-like').html('<i class="fa fa-heart"></i><i class="fa fa-heart-broken"></i>' + nFormatter(points, 1));
+        comment.find('.com-like').html('<i class="icon-heart"></i><i class="icon-heart-broken"></i>' + nFormatter(points, 1));
     }
 }
 // Submit Comment
@@ -688,9 +848,11 @@ function submitComment(podcastId, userId, commentText, parentId=0, replyToId=0){
     if(commentText.length > 1){
         //Call Web Action
         waSubmitComment(podcastId, userId, commentText, parentId, replyToId);
-        gtag('event','comment_submit', {
-            "id": podcastId
-        });
+        if(window.analytics) {
+            gtag('event', 'comment_submit', {
+                "id": podcastId
+            });
+        }
     }
 }
 function submitCommentSuccess(podcastId, commentId, parentId, replyToId, subComment){
@@ -712,12 +874,10 @@ function submitCommentSuccess(podcastId, commentId, parentId, replyToId, subComm
 function submitCommentFailed(errorMessage){
     console.log(errorMessage);
 }
+//</editor-fold>
 
 
-
-//#####################################//
-//          LOGIN / SIGNUP             //
-//#####################################//
+//<editor-fold desc="LOGIN / SIGNUP">
 
 // Prompt User For Login
 function promptForLogin(){
@@ -824,11 +984,10 @@ function promptForLogin(){
 function isLoggedIn(){
     return window.authenticated;
 }
+//</editor-fold>
 
 
-//#####################################//
-//              USER DATA              //
-//#####################################//
+//<editor-fold desc="USER DATA">
 
 function getUserData(podcastId){
 
@@ -838,11 +997,10 @@ function storeNewUserData(podcastId, userData){
 
     userdatas[podcastId] = userData;
 }
+//</editor-fold>
 
 
-//#####################################//
-//             WEB ACTIONS             //
-//#####################################//
+//<editor-fold desc="WEB ACTIONS">
 
 // Request new copy of current csrf token
 function waRequestNewToken(){
@@ -895,7 +1053,7 @@ function waRequestUserDataProcComments(podcastId){
 // Request All Podcast Data Snippet
 function waRequestAllPodcastData(){
     var pageUrl = '/data/get-all/podcasts/';
-    togglePodcastLoadScreen(true);
+    toggleLoadRing(true);
     $.ajax({
         type: 'GET',
         url: pageUrl,
@@ -971,9 +1129,11 @@ function waLikeComment(commentId){
         },
         error: function (error){console.log(error);}
     });
-    gtag('event','comment_like', {
-        "id": commentId
-    });
+    if(window.analytics) {
+        gtag('event', 'comment_like', {
+            "id": commentId
+        });
+    }
 }
 
 // Dislike Comment
@@ -990,15 +1150,16 @@ function waDislikeComment(commentId){
         },
         error: function (error){console.log(error);}
     });
-    gtag('event','comment_dislike', {
-        "id": commentId
-    });
+    if(window.analytics) {
+        gtag('event', 'comment_dislike', {
+            "id": commentId
+        });
+    }
 }
+//</editor-fold>
 
 
-//#####################################//
-//            AUTO UPDATER : interval  //
-//#####################################//
+//<editor-fold desc="AUTO UPDATER : interval">
 
 var autoUpdateInterval = 15; //seconds
 var autoUpdaterRunning = false;
@@ -1024,19 +1185,24 @@ function autoUpdateCall(){
     updateCurrentPodcastData();
     updateCommentTimes();
 }
+//</editor-fold>
 
 
-//#####################################//
-//         HELPFUL FUNCTIONS           //
-//#####################################//
+//<editor-fold desc="HELPFUL FUNCTIONS">
 
 // Get Podcast Id from Podcast Element
 function getPodcastId(podcastElement){
     if(podcastElement != undefined){
-        return parseInt(podcastElement.attr('id').split('-')[1]);
+        return parseInt(podcastElement.attr('podcastId'));
     }
     return 0;
 }
+
+// Get Podcast from Id
+function getPodcast(podcastId){
+    return $('#podcast-' + podcastId);
+}
+
 
 // Format String
 if (!String.prototype.format) {
@@ -1080,10 +1246,56 @@ function timeSince(date) {
     return Math.floor(seconds) + "s";
 }
 
+function canClickAgain(){
+    if(canClick){
+        canClick = false;
+        setTimeout(function (){
+            canClick = true;
+        },500)
+        return true;
+    }
+    return false;
+}
 
-//#####################################//
-//             ALL EVENTS              //
-//#####################################//
+// Number Formatter
+function nFormatter(num, digits) {
+    num = parseInt(num);
+    var si = [
+        { value: 1, symbol: "" },
+        { value: 1E3, symbol: "k" },
+        { value: 1E6, symbol: "m" },
+        { value: 1E9, symbol: "g" },
+        { value: 1E12, symbol: "t" },
+        { value: 1E15, symbol: "p" },
+        { value: 1E18, symbol: "e" }
+    ];
+    var rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+    var i;
+    for (i = si.length - 1; i > 0; i--) {
+        if (num >= si[i].value) {
+            break;
+        }
+    }
+    return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
+}
+
+// String to HEX Color
+var stringToColor = function(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    var colour = '#';
+    for (var i = 0; i < 3; i++) {
+        var value = (hash >> (i * 8)) & 0xFF;
+        colour += ('00' + value.toString(16)).substr(-2);
+    }
+    return colour;
+}
+//</editor-fold>
+
+
+//<editor-fold desc="ALL EVENTS">
 
 // Register Page Events
 function registerPageEvents(){
@@ -1122,9 +1334,11 @@ function registerPageEvents(){
             search = $('#search-bar').val();
             if(search.length > 0){
                 updatePodcastView();
-                gtag('event','search_podcasts', {
-                    "search": search
-                });
+                if(window.analytics) {
+                    gtag('event', 'search_podcasts', {
+                        "search": search
+                    });
+                }
             }
         }
     });
@@ -1183,25 +1397,25 @@ function registerPageEvents(){
 
         //console.log('ScrollTop: ' + scrollTop + ' ScrollHeight: ' + scrollHeight + ' ElHeight: ' + objectsLoaded + ' EstCount: ' + currentObjIndex);
     });
+    enableScrollFading();
 }
 
 // Register Podcast Events
 function registerPodcastEvents(){
-    $(document).on('click', '.podcast-click', function(){
-        var parent = $(this).parent();
-        if (!parent.hasClass('extended')){
-            $('#container').css('scroll-snap-type', 'none');
-            turnOn(parent);
+    $(document).on('click', '.pod', function(){
+        var pod = $(this);
+        if (canClickAgain() && !pod.hasClass('extended') && pod.hasClass('populated')){
+            $('#pods').css('scroll-snap-type', 'none');
+            turnOn(pod);
             setTimeout(function (){
-                $('#container').css('scroll-snap-type', 'y mandatory');
+                $('#pods').css('scroll-snap-type', 'y mandatory');
             }, 1000);
         }
     });
     $(document).on('click', '.close', function(){
-        var parent = $(this).parent();
-        if(parent.hasClass('extended')){
+        var parent = $(this).parent().parent();
+        if(canClickAgain() && parent.hasClass('extended')){
             turnOff(parent);
-            removeFromOpened(parent);
         }
     });
     $(document).on('click', '.play', function(){
@@ -1381,78 +1595,52 @@ function registerCommentEvents(){
     });
 }
 
-// Number Formatter
-function nFormatter(num, digits) {
-    num = parseInt(num);
-    var si = [
-        { value: 1, symbol: "" },
-        { value: 1E3, symbol: "k" },
-        { value: 1E6, symbol: "m" },
-        { value: 1E9, symbol: "g" },
-        { value: 1E12, symbol: "t" },
-        { value: 1E15, symbol: "p" },
-        { value: 1E18, symbol: "e" }
-    ];
-    var rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-    var i;
-    for (i = si.length - 1; i > 0; i--) {
-        if (num >= si[i].value) {
-            break;
+function enableScrollFading(){
+    var vh = $(window).height() / 100;
+    var podHeight = $('#pods .pod').height() + (vh * 1.5);
+    var pods = $('#pods');
+    pods.scroll(function(){
+        var calc = pods.scrollTop() / podHeight;
+        var topIndex = parseInt(calc);
+        var bottomOpacity = calc - topIndex;
+        var topOpacity = 1 - bottomOpacity;
+        for(i=topIndex - 1;i<topIndex+13;i++){
+            var opacity = 1;
+            if(i === topIndex){
+                opacity = topOpacity.toFixed(1);
+            }
+            else if(i === topIndex + 11){
+                opacity = bottomOpacity.toFixed(1);
+            }
+            else if(i === topIndex - 1){
+                opacity = 0;
+            }
+            else if(i === topIndex + 12){
+                opacity = 0;
+            }
+            if(i >= 0){
+                $(loaded_podcasts[i]).css('opacity', opacity);
+            }
         }
-    }
-    return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
+    });
 }
 
-// String to HEX Color
-var stringToColor = function(str) {
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    var colour = '#';
-    for (var i = 0; i < 3; i++) {
-        var value = (hash >> (i * 8)) & 0xFF;
-        colour += ('00' + value.toString(16)).substr(-2);
-    }
-    return colour;
-}
-
-
-//#####################################//
-//          Loading Screen : interval  //
-//#####################################//
-
-var loadSequence;
-function enableLoadSequence(){
-    disableLoadSequence();
-    var time = 0.5;
-    LoadSequence(time);
-    loadSequence = setInterval(function(){
-        LoadSequence(time);
-    }, time * 6000);
-}
-function disableLoadSequence(){
-    if(loadSequence != null){
-        clearInterval(loadSequence);
+function hideAllPodcastsExceptVisible(){
+    var vh = $(window).height() / 100;
+    var podHeight = $('#pods .pod').height() + (vh * 1.5);
+    var pods = $('#pods');
+    var calc = pods.scrollTop() / podHeight;
+    var topIndex = parseInt(calc);
+    var loadedLength = loaded_podcasts.length;
+    var opacity = 0;
+    for(i=0;i<loadedLength;i++){
+        if(i >= topIndex && i < topIndex + 11){
+            opacity = 1;
+        }
+        else{
+            opacity = 0;
+        }
+        $(loaded_podcasts[i]).css('opacity', opacity);
     }
 }
-function LoadSequence(time_seconds){
-    JumpDot(1, time_seconds);
-    setTimeout(function (){
-        JumpDot(2, time_seconds);
-    }, time_seconds * 2000);
-    setTimeout(function (){
-        JumpDot(3, time_seconds)
-    }, time_seconds * 4000);
-}
-function JumpDot(element, time, jumpHeight=0.75, color='#969696'){
-    element = $('.c-' + element);
-    element.css('top', -jumpHeight + 'vh')
-    element.css('background', color);
-    setTimeout(function(){
-        element.css('background', 'grey');
-        element.css('top', 0);
-    }, time * 1000);
-}
-
-
+//</editor-fold>
