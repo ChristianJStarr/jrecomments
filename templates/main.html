@@ -72,11 +72,19 @@
             <!-- PAGE NAV -->
             <nav  class="{% if user.is_authenticated %}authenticated{% endif %}">
                 <h1>[ THE UNOFFICIAL JRE COMMENT SECTION  ]</h1>
-                {% if user.is_authenticated or True%}
-                <div class="auth-wrap">
-                    <a id="username-preview">[ {{ user.get_username }}CHRISTIAN STARR ]</a>
-                    <a id="logout-button">[ LOGOUT ]</a>
-                </div>
+                {% if user.is_authenticated or True %}
+                    <div class="auth-wrap{% if user.is_staff %} is-staff{% endif %}">
+                        {% if user.is_staff %}
+                            <div class="admin-menu">
+                                <a class="admin-button">[ ADMIN ]</a>
+                                <div class="admin-drop">
+                                    <a class="admin-task" id="scrape-controls">SCRAPE CONTROLS</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                        <a class="username-preview">[ {{ user.get_username }} ]</a>
+                        <a class="logout-button">[ LOGOUT ]</a>
+                    </div>
                 {% endif %}
             </nav>
 
@@ -130,73 +138,84 @@
                 </div>
 
                 <!-- LOGIN / SIGNUP -->
-                <div id="nickname">
-                    <div id="nickname-container">
+                <div id="authentication">
+                    <div id="authentication-inner">
                         <a class="title">LOGIN / SIGN UP</a>
                         <p class="error"><!--  ERROR MESSAGE --></p>
-                        <input id="username" type="text" maxlength="20" placeholder="Username">
-                        <input id="password" type="password" maxlength="20" placeholder="Password">
+                        <input id="username" type="text" maxlength="20" placeholder="USERNAME">
+                        <input id="password" type="password" maxlength="20" placeholder="PASSWORD">
                         <p class="terms">By continuing you agree to our<br><a href="{% url 'terms'%}">Terms</a> and <a href="{% url 'privacy'%}">Privacy Policy</a></p>
                         <a class="cancel">CANCEL</a><a class="continue">CONTINUE</a>
                     </div>
+
+                    <!--<div id="notrobot" class="activated">
+                        <a class="title">Verify you're cool.<br>Make Joe happy.</a>
+                        <div class="window">
+                            <div class="joe"></div>
+                            <div class="good-gift"></div>
+                            <div class="bad-gift"></div>
+                        </div>
+                    </div>-->
                 </div>
 
                 <!-- PODCASTS VIEWPORT -->
-                <div id="pods" >
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
-                    </div>
-                    <div class="pod">
-                        <a class="id"></a>
-                        <a class="name"></a>
-                        <a class="dur"></a>
+                <div id="pods-wrap">
+                    <div id="pods" >
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
+                        <div class="pod">
+                            <a class="id"></a>
+                            <a class="name"></a>
+                            <a class="dur"></a>
+                        </div>
                     </div>
                 </div>
             </div>

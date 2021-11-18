@@ -11,7 +11,7 @@ from jrecomments.models import Comment, Podcast
 
 api_key = 'AIzaSyCiQ7ITLaTYEWp7S6-TgGfLxKANU-AIYfI'
 
-api_key = 'AIzaSyAu8N6583jvHYPAGJMVnvG9mC7ce-jPqxA'
+#api_key = 'AIzaSyAu8N6583jvHYPAGJMVnvG9mC7ce-jPqxA'
 chanel_id = 'UCzQUP1qoWDoEbmsQxvdjxgQ'
 
 com_cache = {}

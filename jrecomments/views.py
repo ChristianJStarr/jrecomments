@@ -22,7 +22,7 @@ auto_update_expire = 15
 urgent_expire_cache = 60 # 1 Minute
 
 # SIMULATED REQUEST DELAY
-simulated_delay = 1.00
+simulated_delay = 0.00
 
 
 #########################################
@@ -32,9 +32,8 @@ simulated_delay = 1.00
 # INDEX
 #@cache_page(urgent_expire_cache)
 def index_views(request):
-
     ## EVERY DAY
-    #find_youtube_links(30) ## Looks for (x) amount of new podcasts on youtube
+    #find_youtube_links(2000, 10000) ## Looks for (x) amount of new podcasts on youtube
     #youtube_pull_comments(1, 1000) ## Looks at (x) amount of new podcasts for (y) amount of comments each Cost:
     #sort_comment_ids()
     #find_youtube_link_task(1732)
@@ -85,7 +84,7 @@ def podcasts(request):
     return JsonResponse({'podcasts': output })
 
 # GET SPECIFIC PODCAST DATA
-@cache_page(auto_update_expire)
+#@cache_page(auto_update_expire)
 def podcast(request, id):
     sleep(simulated_delay)
     comments = 0
@@ -106,19 +105,20 @@ def podcast(request, id):
     return Http404()
 
 # GET MASTER COMMENTS
-@cache_page(urgent_expire_cache)
+#@cache_page(urgent_expire_cache)
 def comments_master(request, id, amount, offset):
+    offset = int(offset)
+    amount = int(amount)
+    amount += offset
     sleep(simulated_delay)
     output = {}
     total_comments = 0
     comments = Comment.objects.filter(podcast_id=id, parent_id=0).order_by('-popularity')
-    total_comments = len(comments)
-    comments = comments[int(offset):int(amount)]
+    comments = comments[offset:amount]
     for comment in comments:
         if comment != None:
-            print(str(comment.popularity))
             output[comment.id] = comment.to_list()
-    return JsonResponse({'comments_total': total_comments, 'comments': output})
+    return JsonResponse({'comments': output})
 
 # GET SUB COMMENTS OF MASTER
 @cache_page(urgent_expire_cache)
@@ -132,7 +132,7 @@ def comments_sub(request, id, amount, offset):
     data = Comment.objects.filter(parent_id=id)[int(offset):int(amount)]
     if data != None:
         for comment in data:
-            comments[comment.id] = comment_to_list(comment)
+            comments[comment.id] = comment.to_list()
     return JsonResponse({'comments_total': total_comments, 'comments': comments})
 
 # GET SPECIFIC USER DATA

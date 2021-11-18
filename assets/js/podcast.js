@@ -1,6 +1,11 @@
+//<editor-fold desc="GLOBAL VARIABLES">
 var max_podcasts_initial = 20;
 var max_podcasts_loadin = 20;
 var max_comments_intial = 20;
+var can_load_in_podcasts = true;
+var can_load_in_comments = true;
+
+
 var opened = 0;
 var lastOpened = 0;
 var podcasts = {};
@@ -28,7 +33,7 @@ var currentPlayingGlowInterval;
 
 var commentsLoaded = 0;
 var currentReplyId = 0;
-
+//</editor-fold>
 
 //<editor-fold desc="HTML TEMPLATES">
 var comment_com_bar = '<div class="com-bar">' +
@@ -56,7 +61,7 @@ var spotify_web_template = '<iframe' +
 
 var sub_comment_template = '<div class="com-sub" id="{0}" podcastId="{4}" masterId="{5}" replyToId="{6}" date="{12}">' +
     '<a class="com-text">' +
-    '<i class="com-name-wrap"><i class="icon-heart com-donor"></i>' +
+    '<i class="com-name-wrap">' +
     '<span class="com-name" style="color:{2};">{1}</span></i>' +
     '{3}</a>' +
     comment_com_bar + '</div>';
@@ -93,9 +98,10 @@ var commentInputTemplate = '<div class="commenter"><a class="comment-max-char">0
     '<input class="comment-submit" type="submit" value="">' +
     '<i class="icon-arrow-right submit"></i></div>';
 
-var commentsWrapTemplate = '<div class="comments-wrap"><div class="comments"></div></div>';
-//</editor-fold>
+var commentsWrapTemplate = '<div class="comments-wrap"><div class="coms"></div></div>';
 
+var podcastTemplate = '<div class="pod" id="podcast-{0}" podcastId="{0}"><a class="id">{0}</a><a class="name">{1}</a><a class="dur">{2}</a></div>'
+//</editor-fold>
 
 //<editor-fold desc="STARTUP">
 $(document).ready(function(){
@@ -114,7 +120,6 @@ $(document).ready(function(){
     $('#top-bar').addClass('make-visible');
 });
 //</editor-fold>
-
 
 //<editor-fold desc="EMBEDDED PLAYER">
 
@@ -165,7 +170,6 @@ function currentPlayingGlow(podcastId){
 }
 //</editor-fold>
 
-
 //<editor-fold desc="PODCAST DATA">
 
 // Get All Podcast Data
@@ -212,18 +216,25 @@ function updatePodcastView(loadin=false){
     //Apply Limit
     view = view.slice(addonOffset, amountToAdd + addonOffset);
     addonOffset += amountToAdd;
-    drawPodcastsToViewport(pods, view);
+    drawPodcastsToViewport(pods, view, loadin);
 }
-var podcastTemplate = '<div class="pod" id="podcast-{0}" podcastId="{0}"><a class="id">{0}</a><a class="name">{1}</a><a class="dur">{2}</a></div>'
 
 // Draw to Podcast Viewport
-function drawPodcastsToViewport(pods, podcastData){
+function drawPodcastsToViewport(pods, podcastData, loadin = false){
     var existingPods = pods.children();
     var existingCount = existingPods.length;
     var dataCount = podcastData.length;
 
     toggleLoadRing(false);
-    if(existingCount > dataCount){
+
+    if(loadin){
+        $.each(podcastData, function (index, podcast){
+            pods.append(podcastTemplate.format(podcast.id, podcast.name, podcast.duration));
+            objectsLoaded += 1;
+        });
+        $('#pods .pod').addClass('populated');
+    }
+    else if(existingCount > dataCount){
         var count = 0;
         $.each(podcastData, function(index, podcast){
             var pod = $(existingPods[count]);
@@ -289,33 +300,29 @@ function podcastDataFormat(template, podcast){
     return template.format(podcast.id, podcast.name, podcast.duration, podcast.date, podcast.comments, podcast.score, podcast.popularity);
 }
 
-function loadMorePodcasts(){
-    updatePodcastView(true);
-    setTimeout(hitBottom = false, 2000);
-}
-function checkIfShouldClear(){
-    if(shouldClearStrength > 10){
-        shouldClearStrength = 0;
-        if(!clearing){
-            clearing = true;
-            clearOutPodcasts(clearAwayObjects)
-        }
-        console.log('Should Definitly Clear!');
-    }
-}
-function clearOutPodcasts(amount){
-    $('#container > .podcast').slice(-amount).remove();
-    clearing = false;
-    objectsLoaded -= amount;
-}
-
 function updateCurrentPodcastData(){
     if(opened[0] != null && opened[0] != undefined){
         waRequestSpecificPodcastData(getPodcastId(opened[0]));
     }
 }
-//</editor-fold>
 
+function podcastLoadUnload(lastVisible){
+    if(objectsLoaded <= lastVisible + (max_podcasts_initial / 2)){
+        if(can_load_in_podcasts){
+            updatePodcastView(true);
+            can_load_in_podcasts = false;
+            setTimeout(function(){
+                can_load_in_podcasts = true;
+            }, 500);
+        }
+    }else if (objectsLoaded > lastVisible + (max_podcasts_initial * 2)){
+        $('#container > .podcast').slice(-max_podcasts_initial).remove();
+        objectsLoaded -= max_podcasts_initial;
+    }
+}
+
+
+//</editor-fold>
 
 //<editor-fold desc="PODCASTS">
 
@@ -369,7 +376,7 @@ function turnOn(podcast){
         date = date.getMonth() + '/' + date.getDay() + '/' + date.getFullYear().toString().substr(2);
         content.append(dataBar.format(date, podcastData.duration, nFormatter(podcastData.score), nFormatter(podcastData.comments)));
         content.append(commentsWrapTemplate);
-        var comments = content.find('.comments');
+        var comments = content.find('.coms');
         comments.append(comment_template + comment_template + comment_template + comment_template + comment_template);
         content.append(commentInputTemplate);
     }
@@ -390,7 +397,7 @@ function turnOn(podcast){
 
     // Lock the Podcast Viweport
     setTimeout(function (){
-        $('#pods').addClass('locked');
+        $('#pods-wrap').addClass('locked');
     },500);
 
     // Google Analytics
@@ -402,7 +409,16 @@ function turnOn(podcast){
     }
 
     opened = podcastId;
-
+    $('.coms').scroll(function(){
+        var scroll = $(this).scrollTop() + $(this).innerHeight();
+        var bottom = $(this)[0].scrollHeight - 100;
+        if(can_load_in_comments && scroll > bottom){
+            can_load_in_comments = false;
+            getCommentsMaster(podcastId, max_comments_intial, commentsLoaded);
+            console.log('loading more comments');
+            setTimeout(function(){ can_load_in_comments = true; }, 1000);
+        }
+    });
 }
 function turnOff(podcast){
     //if(playing){
@@ -419,7 +435,7 @@ function turnOff(podcast){
     }
 
     // Unlock Podcast Viewport
-    $('#pods').removeClass('locked');
+    $('#pods-wrap').removeClass('locked');
     //scrollTo(podcast);
     // Google Analytics
     if(window.analytics) {
@@ -444,14 +460,15 @@ function clearOpened(){
 }
 function scrollTo(selector) {
     var offset = selector.offset();
-    var $main = $('#pods');
+    var $main = $('#pods-wrap');
     var vh = ($(window).height() / 100) * 1.5;
     $main.animate({
         scrollTop: offset.top - ($main.offset().top - $main.scrollTop()) - vh
     }, "fast");
 }
-//</editor-fold>
 
+
+//</editor-fold>
 
 //<editor-fold desc="COMMENTING">
 
@@ -464,7 +481,9 @@ function getCommentsMaster(podcastId, amount, offset){
         url: pageUrl,
         dataType: 'json',
         success: function (data) {
-            drawCommentsToViewport(podcastId,data.comments, data.comments_total, Object.keys(data.comments));
+            var loadCount = Object.keys(data.comments).length;
+            console.log('comments asked for ' + amount + ' received amount is ' + loadCount);
+            drawCommentsToViewport(podcastId,data.comments, loadCount, offset);
         },
         error: function (error){
             console.log(error);
@@ -503,7 +522,7 @@ function getCommentsSub(commentId, amount, offset){
                 comment.find('.com-subs').css('border-top','none');
                 comment.find('.com-subs').css('background','transparent');
             }
-            updateCommentDisplay(commentId,data.comments, data.comments_total, comments_length, true);
+            drawSubCommentsToViewport(commentId,data.comments, comments_length, data.comments_total, offset);
         },
         error: function (error){
             console.log(error);
@@ -512,105 +531,160 @@ function getCommentsSub(commentId, amount, offset){
 }
 
 
-function drawCommentsToViewport(podcastId, commentData, loadCount, totalCount){
+function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
     var podcast = getPodcast(podcastId);
     if(podcast !== undefined){
-        var content = podcast.find('.comments');
+        var content = podcast.find('.coms');
         var existingComs = content.children();
         var existingCount = existingComs.length;
         toggleLoadRing(false);
-        if(existingCount > loadCount){
-            var count = 0;
-            // Re-populate Existing Coms with Data
-            $.each(commentData, function(index, comment){
-                var com = $(existingComs[count]);
-                var text = com.find('.com-text');
-                var comBar = com.find('.com-bar');
-                com.attr('id', comment.id);
-                com.attr('podcastId', comment.podcast);
-                com.attr('masterId', comment.master);
-                com.attr('replyToId', comment.replyToId);
-                com.attr('date', comment.datetime);
-                text.html(name_wrap_template.format(comment.name, comment.nameColor));
-                text.append(comment.comment + '<span class="text-place"></span>');
-                comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
-                comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
-                comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
-                com.find('.com-subs').text('');
-                count += 1;
-            });
 
-            // Remove Extra Existing Coms
-            for(x=count;x<existingCount;x++){
-                existingComs[x].remove();
-                commentsLoaded -= 1;
-            }
-            // Make Coms Visible
-            $('.com').addClass('populated');
-        }
-        else if(existingCount < loadCount){
-            if(existingCount > 0){
+        if(offset === 0){
+            if(existingCount > loadCount){
                 var count = 0;
-                // Re-populate Existing Coms & Create New Coms with Data
+                // Re-populate Existing Coms with Data
                 $.each(commentData, function(index, comment){
-                    if(count < existingCount){
-                        var com = $(existingComs[count]);
-                        var text = com.find('.com-text');
-                        var comBar = com.find('.com-bar');
-                        com.attr('id', comment.id);
-                        com.attr('podcastId', comment.podcast);
-                        com.attr('masterId', comment.master);
-                        com.attr('replyToId', comment.replyToId);
-                        com.attr('date', comment.datetime);
-                        text.html(formatComment(name_wrap_template, comment));
-                        text.append(comment.comment + '<span class="text-place"></span>');
-                        comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
-                        comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
-                        comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
-                        com.find('.com-subs').text('');
-                        count += 1;
-                    }
-                    else{
+                    var com = $(existingComs[count]);
+                    var text = com.find('.com-text');
+                    var comBar = com.find('.com-bar');
+                    com.attr('id', comment.id);
+                    com.attr('podcastId', comment.podcast);
+                    com.attr('masterId', comment.master);
+                    com.attr('replyToId', comment.replyToId);
+                    com.attr('date', comment.datetime);
+                    text.html(name_wrap_template.format(comment.name, comment.nameColor));
+                    text.append(comment.comment + '<span class="text-place"></span>');
+                    comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
+                    comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
+                    comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
+                    com.find('.com-subs').text('');
+                    count += 1;
+                });
+
+                // Remove Extra Existing Coms
+                for(x=count;x<existingCount;x++){
+                    existingComs[x].remove();
+                    commentsLoaded -= 1;
+                }
+                // Make Coms Visible
+                $('.com').addClass('populated');
+            }
+            else if(existingCount < loadCount){
+                if(existingCount > 0){
+                    var count = 0;
+                    // Re-populate Existing Coms & Create New Coms with Data
+                    $.each(commentData, function(index, comment){
+                        if(count < existingCount){
+                            var com = $(existingComs[count]);
+                            var text = com.find('.com-text');
+                            var comBar = com.find('.com-bar');
+                            com.attr('id', comment.id);
+                            com.attr('podcastId', comment.podcast);
+                            com.attr('masterId', comment.master);
+                            com.attr('replyToId', comment.replyToId);
+                            com.attr('date', comment.datetime);
+                            text.html(formatComment(name_wrap_template, comment));
+                            text.append(comment.comment + '<span class="text-place"></span>');
+                            comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
+                            comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
+                            comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
+                            com.find('.com-subs').text('');
+                            count += 1;
+                        }
+                        else{
+                            content.append(formatComment(comment_template, comment));
+                            commentsLoaded += 1;
+                        }
+
+                    });
+                }
+                else{
+                    content.text('');
+                    // Create and Append Coms
+                    $.each(commentData, function (index, comment){
                         content.append(formatComment(comment_template, comment));
                         commentsLoaded += 1;
-                    }
-
-                });
+                    });
+                }
+                // Make Coms Visible
+                $('.com').addClass('populated');
             }
             else{
-                content.text('');
-                // Create and Append Coms
-                $.each(commentData, function (index, comment){
-                    content.append(formatComment(comment_template, comment));
-                    commentsLoaded += 1;
+                var count = 0;
+                // Re-populate Existing Coms with Data
+                $.each(commentData, function(index, comment){
+                    var com = $(existingComs[count]);
+                    var text = com.find('.com-text');
+                    var comBar = com.find('.com-bar');
+                    com.attr('id', comment.id);
+                    com.attr('podcastId', comment.podcast);
+                    com.attr('masterId', comment.master);
+                    com.attr('replyToId', comment.replyToId);
+                    com.attr('date', comment.datetime);
+                    text.html(name_wrap_template.format(comment.name, comment.nameColor));
+                    text.append(comment.comment + '<span class="text-place"></span>');
+                    comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
+                    comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
+                    comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
+                    com.find('.com-subs').text('');
+                    count += 1;
                 });
+                // Make Coms Visible
+                $('.com').addClass('populated');
             }
-            // Make Coms Visible
-            $('.com').addClass('populated');
         }
         else{
-            var count = 0;
-            // Re-populate Existing Coms with Data
-            $.each(commentData, function(index, comment){
-                var com = $(existingComs[count]);
-                var text = com.find('.com-text');
-                var comBar = com.find('.com-bar');
-                com.attr('id', comment.id);
-                com.attr('podcastId', comment.podcast);
-                com.attr('masterId', comment.master);
-                com.attr('replyToId', comment.replyToId);
-                com.attr('date', comment.datetime);
-                text.html(name_wrap_template.format(comment.name, comment.nameColor));
-                text.append(comment.comment + '<span class="text-place"></span>');
-                comBar.find('.com-date').text(timeSince(Date.parse(comment.datetime)));
-                comBar.find('.com-like').html('<i class="icon-heart"></i>' + nFormatter(comment.likes, 1));
-                comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
-                com.find('.com-subs').text('');
-                count += 1;
+            // Create and Append Coms
+            $.each(commentData, function (index, comment){
+                content.append(formatComment(comment_template, comment));
+                commentsLoaded += 1;
             });
-            // Make Coms Visible
             $('.com').addClass('populated');
         }
+
+        $('.text-place').hide();
+    }
+}
+
+function drawSubCommentsToViewport(commentId, commentData, loadCount, totalCount, offset){
+    var com = $('#' + commentId);
+    podcastId = com.attr('podcastId');
+    commentSection = com.find('.com-subs');
+    if(offset === 0){
+        commentSection.text('');
+        $.each(commentData, function(index, comment){
+            if(comment.replyToId !== 0 && comment.replyToId !== comment.master){
+                commentSection.append(formatComment(sub_comment_template_deep, comment));
+
+            }else{
+                commentSection.append(formatComment(sub_comment_template, comment));
+            }
+            updateComment(podcastId, comment.id);
+        });
+        com.attr('loaded', loadCount);
+    }
+    else{
+        commentSection.removeChild('.com-sub-extend');
+        $.each(commentData, function(index, comment){
+            if(comment.replyToId !== 0 && comment.replyToId !== comment.master){
+                commentSection.append(formatComment(sub_comment_template_deep, comment));
+
+            }else{
+                commentSection.append(formatComment(sub_comment_template, comment));
+            }
+            updateComment(podcastId, comment.id);
+        });
+        if(com.hasAttribute('loaded')){
+            var newLoaded = parseInt(com.attr('loaded'));
+            newLoaded += loadCount;
+            com.attr('loaded', newLoaded);
+        }
+    }
+    $('.com').addClass('populated');
+    if(loadCount > 0 && totalCount > loadCount){
+        commentSection.append('<div class="com-sub-extend">LOAD MORE</i></div>');
+        commentSection.find('.com-sub-extend').show();
+        commentSection.css('padding-bottom', '2vh');
     }
 }
 
@@ -637,7 +711,7 @@ function updateCommentDisplay(id, comments,  potential_comments, total_comments,
         podcastId = id;
         podcast = $('#podcast-' + podcastId);
         if(podcast != null){
-            commentSection = podcast.find('.comments')
+            commentSection = podcast.find('.coms')
             ready = true;
         }
     }
@@ -688,19 +762,20 @@ function formatComment(commentTemplate, comment){
     //11-'datetime'
     //12-'likes'
     //13-'dislikes'
+    console.log(comment);
     return commentTemplate.format(comment.id,
         comment.username,
-        stringToColor(comment.username),
+        getColorOfString(comment.username),
         comment.comment,
         comment.podcast,
         comment.master,
         comment.replyToId,
         comment.replyToName,
-        stringToColor(comment.replyToName),
+        getColorOfString(comment.replyToName),
         timeSince(Date.parse(comment.datetime)),
         nFormatter(comment.likes, 1),
         nFormatter(comment.subCount, 1),
-        comment.datetime)
+        comment.datetime);
 }
 function updateCommentTimes(){
     $('[date]').each(function(index, comment){
@@ -876,13 +951,12 @@ function submitCommentFailed(errorMessage){
 }
 //</editor-fold>
 
-
 //<editor-fold desc="LOGIN / SIGNUP">
 
 // Prompt User For Login
 function promptForLogin(){
-    var nickname = $('#nickname');
-    var container = $('#nickname-container');
+    var nickname = $('#authentication');
+    var container = $('#authentication-inner');
     var usernameField = container.find('input[type=text]');
     var passwordField = container.find('input[type=password]');
     var cancelBtn = container.find('.cancel');
@@ -900,7 +974,7 @@ function promptForLogin(){
             else{
                 continueBtn.css('color', 'grey');
             }
-            usernameField.css('color', stringToColor(username));
+            usernameField.css('color', getColorOfString(username));
         }
         else{
             continueBtn.css('color', 'grey');
@@ -944,13 +1018,13 @@ function promptForLogin(){
                             dataType: 'json',
                             success: function (datatwo) {
                                 if(datatwo.status == 'success'){
-                                    $('#nickname').hide();
-                                    $('#nickname .error').hide();
+                                    $('#authentication').hide();
+                                    $('#authentication .error').hide();
                                     window.username = usernameV;
                                     window.CSRF_TOKEN = datatwo.newToken;
                                     $('#username-preview').text('[ ' + usernameV + ' ]');
                                     window.authenticated = true;
-                                    $('#wrapper').addClass('authenticated');
+                                    $('#wrap').addClass('authenticated');
                                     $('.comment-input').select();
                                 }
                                 else{
@@ -963,9 +1037,9 @@ function promptForLogin(){
                         });
                     }
                     else{
-                        $('#nickname .error').show();
-                        $('#nickname .error').text(data.reason);
-                        $('#nickname-container input[type=text]').focus();
+                        $('#authentication .error').show();
+                        $('#authentication .error').text(data.reason);
+                        $('#authentication input[type=text]').focus();
                     }
                 },
                 error: function (error){
@@ -976,7 +1050,7 @@ function promptForLogin(){
 
     });
     cancelBtn.on('click', function (){
-        $('#nickname').hide();
+        $('#authentication').hide();
     });
 }
 
@@ -985,7 +1059,6 @@ function isLoggedIn(){
     return window.authenticated;
 }
 //</editor-fold>
-
 
 //<editor-fold desc="USER DATA">
 
@@ -998,7 +1071,6 @@ function storeNewUserData(podcastId, userData){
     userdatas[podcastId] = userData;
 }
 //</editor-fold>
-
 
 //<editor-fold desc="WEB ACTIONS">
 
@@ -1158,7 +1230,6 @@ function waDislikeComment(commentId){
 }
 //</editor-fold>
 
-
 //<editor-fold desc="AUTO UPDATER : interval">
 
 var autoUpdateInterval = 15; //seconds
@@ -1186,7 +1257,6 @@ function autoUpdateCall(){
     updateCommentTimes();
 }
 //</editor-fold>
-
 
 //<editor-fold desc="HELPFUL FUNCTIONS">
 
@@ -1279,21 +1349,43 @@ function nFormatter(num, digits) {
     return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
 }
 
-// String to HEX Color
-var stringToColor = function(str) {
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    var colour = '#';
-    for (var i = 0; i < 3; i++) {
-        var value = (hash >> (i * 8)) & 0xFF;
-        colour += ('00' + value.toString(16)).substr(-2);
-    }
-    return colour;
-}
-//</editor-fold>
 
+// Get Name Color
+function getColorOfString(inputString){
+    var minLuma = 60;
+    var tries = 0;
+    while (true){
+        for(i=0;i<tries;i++){
+            inputString += inputString[0]
+        }
+        var hash = 0;
+        for (var i = 0; i < inputString.length; i++) {
+            hash = inputString.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        var color = '';
+        for (var e = 0; e < 3; e++) {
+            var value = (hash >> (e * 8)) & 0xFF;
+            color += ('00' + value.toString(16)).substr(-2);
+        }
+        var rgb = parseInt(color.substring(1), 16);
+        var r = (rgb >> 16) & 0xff;
+        var g = (rgb >>  8) & 0xff;
+        var b = (rgb >>  0) & 0xff;
+        var luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        tries += 1;
+        if (luma >= minLuma) {
+            return '#' + color;
+        }
+        else if(tries > 5){
+            return '#ffffff'
+        }
+    }
+
+
+}
+
+
+//</editor-fold>
 
 //<editor-fold desc="ALL EVENTS">
 
@@ -1365,6 +1457,28 @@ function registerPageEvents(){
             notify.css('opacity', 0);
         }, 1000);
     });
+    $(document).on('click', '.admin-button', function(){
+        if ($('.admin-drop').hidden === true){
+            $('.admin-drop').show();
+        }
+        else{
+            $('.admin-drop').hide();
+        }
+        console.log('clicked');
+    });
+    $(document).on('click', '.admin-task', function(){
+        var link = $(this);
+        var data = link.attr('address-data');
+        var notify = link.find('.copy-notify');
+
+        navigator.clipboard.writeText(data.toString());
+        link.css('color', '#000');
+        notify.css('opacity', 1);
+        setTimeout(function(){
+            link.css('color', 'grey');
+            notify.css('opacity', 0);
+        }, 1000);
+    });
     $('#container').scroll(function(){
         var container = $('#container');
         var podHeight = $('.podcast').height();
@@ -1408,7 +1522,7 @@ function registerPodcastEvents(){
             $('#pods').css('scroll-snap-type', 'none');
             turnOn(pod);
             setTimeout(function (){
-                $('#pods').css('scroll-snap-type', 'y mandatory');
+                $('#pods').css('scroll-snap-type', 'none');
             }, 1000);
         }
     });
@@ -1529,14 +1643,14 @@ function registerCommentEvents(){
         if(currentVal > 2 || totalLength > 35){
             if(!podcast.hasClass('enlarge')){
                 podcast.find('.comment').addClass('enlarge');
-                podcast.find('.comments').addClass('enlarge-edit');
+                podcast.find('.coms').addClass('enlarge-edit');
                 podcast.find('.comments-wrap').addClass('enlarge-edit-wrap');
             }
         }
         else{
             if(podcast.hasClass('enlarge')){
                 podcast.find('.comment').removeClass('enlarge');
-                podcast.find('.comments').removeClass('enlarge-edit');
+                podcast.find('.coms').removeClass('enlarge-edit');
                 podcast.find('.comments-wrap').removeClass('enlarge-edit-wrap');
             }
         }
@@ -1553,7 +1667,6 @@ function registerCommentEvents(){
     $(document).on('click', '.com-comment, .com-reply', function(){
         var comment = $(this).parent().parent();
         var isReplyBtn = ($(this).hasClass('com-reply'));
-        console.log(isReplyBtn);
         if(comment != undefined){
             var commentId = comment.attr('id');
             var podcastId = comment.attr('podcastId');
@@ -1562,7 +1675,18 @@ function registerCommentEvents(){
                 return
             }
             if(comment.attr('extended') !== 'yes'){
-                getCommentsSub(commentId, 5, 0);
+                if(isReplyBtn){
+                    if(isLoggedIn()){
+                        getCommentsSub(commentId, 5, 0);
+                    }
+                    else{
+                        promptForLogin();
+                        getCommentsSub(commentId, 5, 0);
+                    }
+                }
+                else{
+                    getCommentsSub(commentId, 5, 0);
+                }
             }
             else if(!isReplyBtn){
                 comment.attr('extended', 'no');
@@ -1593,17 +1717,21 @@ function registerCommentEvents(){
             //commentId podcastId name
         }
     });
+
+
+
 }
 
 function enableScrollFading(){
     var vh = $(window).height() / 100;
-    var podHeight = $('#pods .pod').height() + (vh * 1.5);
-    var pods = $('#pods');
+    var podHeight = ((78.5 * vh) / 12) - 0.47880285714;
+    var pods = $('#pods-wrap');
     pods.scroll(function(){
-        var calc = pods.scrollTop() / podHeight;
+        var calc = (pods.scrollTop() - (1.5 * vh)) / podHeight;
         var topIndex = parseInt(calc);
         var bottomOpacity = calc - topIndex;
         var topOpacity = 1 - bottomOpacity;
+        /*
         for(i=topIndex - 1;i<topIndex+13;i++){
             var opacity = 1;
             if(i === topIndex){
@@ -1621,11 +1749,13 @@ function enableScrollFading(){
             if(i >= 0){
                 $(loaded_podcasts[i]).css('opacity', opacity);
             }
-        }
+        }*/
+        podcastLoadUnload(topIndex + 10);
     });
 }
 
 function hideAllPodcastsExceptVisible(){
+    return;
     var vh = $(window).height() / 100;
     var podHeight = $('#pods .pod').height() + (vh * 1.5);
     var pods = $('#pods');
