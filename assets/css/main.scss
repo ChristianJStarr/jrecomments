@@ -139,7 +139,6 @@ nav{
 	//noinspection CssInvalidPropertyValue
 	-webkit-mask-image: -webkit-radial-gradient(white,black);
 	opacity:0;
-	transition:opacity ease 0.5s;
 	#load-spin{
 		position:absolute;
 		right:0;left:0;
@@ -159,6 +158,7 @@ nav{
 		border-radius:1.2vh;
 	}
 	&.enabled{
+		transition:opacity ease 0.5s;
 		opacity:1;
 		#load-spin{
 			-webkit-animation:loadEdgeSpin $loader-speed linear infinite;
@@ -233,6 +233,7 @@ nav{
 /* MAIN CONTAINER ELEMENT */
 #main{
 	width:calc(100% - 3vh - 2px);
+	max-width: 500px;
 	border-radius:1vh;
 	height:80vh;
 	background:rgba(111,111,111,0.2);
@@ -255,12 +256,16 @@ nav{
 	padding-bottom:1.5vh;
 	box-sizing:border-box;
 	-ms-overflow-style: none;
+	overflow:hidden;
 	overflow-y: scroll;
+	border-radius: 1vh;
 	//scroll-snap-type: y mandatory;
 	display:block;
 	font-size:0;
 	-ms-overflow-style: none;
 	scrollbar-width: none;
+	//noinspection CssInvalidPropertyValue
+	-webkit-mask-image: -webkit-radial-gradient(white,black);
 	&::-webkit-scrollbar {
 		display: none;
 	}
@@ -271,7 +276,7 @@ nav{
 
 #pods{
 	width:100%;
-	min-height: calc(((78.5vh / 12) - 1.5vh) * 1800);
+	height:auto;
 	box-sizing:border-box;
 	margin:0;
 	display:block;
@@ -473,7 +478,7 @@ nav{
 			box-sizing:border-box;
 			background: linear-gradient(270deg, rgba(255,255,255,0.05), rgba(255,255,255,0.08),rgba(255,255,255,0.05));
 	    	background-size: 100vw 20vh;
-
+			user-select: none;
 	    	-webkit-animation: loadBackgroundMove 5s ease infinite;
 	    	-moz-animation: loadBackgroundMove 5s ease infinite;
 	    	animation: loadBackgroundMove 5s ease infinite;
@@ -584,6 +589,9 @@ nav{
 		-webkit-hyphens: auto;
 	    -moz-hyphens: auto;
         hyphens: auto;*/
+		a{
+			color:grey;
+		}
 	}
 	.text-place{
 
@@ -627,7 +635,7 @@ nav{
 	.com-bar{
 		width: calc(100% - 1.5vh);height: 1.422vh;
 		padding:0;
-		margin:1.5vh 0 0.55vh 1.5vh;
+		margin:1.5vh 0 1.5vh 1.5vh;
 		font-size:0;
 		overflow:hidden;
 		position:relative;
@@ -662,12 +670,14 @@ nav{
 		}
 		.com-comment{
 			i{
-				padding-right:0.5vh;
-			}
-			&:hover, &:hover i{
-				color:lightgrey;
+				transform-origin: center calc(1.422vh / 2);
+				&.loading{
+					transition:transform linear 120s;
+					transform:rotate(50000deg);
+				}
 			}
 			cursor:pointer;
+
 		}
 		.com-date{
 			padding-left: 0;
@@ -714,9 +724,6 @@ nav{
 			i{
 				padding-right:0.5vh;
 			}
-			&:hover, &:hover i{
-				color:lightgrey;
-			}
 			cursor:pointer;
 		}
 	}
@@ -746,6 +753,10 @@ nav{
 			}
 			i{
 				font-size: 1.222vh;
+				width:1.222vh;
+				text-align: center;
+				vertical-align: center;
+				margin:0 0.5vh;
 			}
 		}
 	}
@@ -754,26 +765,26 @@ nav{
 	width:calc(100% + 1.5vh);
 	height:auto;
 	font-size:0;
-	padding-top:2vh;
 	margin:0;
 	position:relative;
 	border-top:none;
+	padding:0;
 }
 .com-sub-extend{
-
+	padding:0;
 	display: block;
-	width:100%;height:3vh;
+	width:100%;height:4vh;
 	font-size:1.4vh;
-	line-height:3vh;
+	line-height:4vh;
 	overflow: hidden;
 	vertical-align: top;
-	padding:1vh;
 	box-sizing: border-box;
 	color:lightgrey;
 	margin:0 auto;
 	text-align:center;
 	justify-content: center;
 	align-content: center;
+	background:rgba(0,0,0,0.39);
 }
 .com-sub{
 	position:relative;
@@ -783,9 +794,9 @@ nav{
 	height: auto;
 	text-align: left;
 	padding: 1.5vh 1.5vh 1vh 1.5vh;
-	padding-top: 0;
 	margin:0;
 	box-sizing: border-box;
+	background:rgba(0,0,0,0.35);
 	line-height: 2.22vh;
 	border-bottom: solid 1px rgba(0,0,0,0.25);
 
@@ -878,9 +889,6 @@ nav{
 			i{
 				padding-right:0.5vh;
 			}
-			&:hover, &:hover i{
-				color:lightgrey;
-			}
 			cursor:pointer;
 		}
 		.com-date{
@@ -926,9 +934,6 @@ nav{
 			right:0;top:0;
 			i{
 				padding-right:0.5vh;
-			}
-			&:hover, &:hover i{
-				color:lightgrey;
 			}
 			cursor:pointer;
 		}
@@ -1504,7 +1509,9 @@ footer{
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+.icon-sync-alt:before {
+	content: "\e914";
+}
 .icon-arrow-left:before {
   content: "\e900";
 }

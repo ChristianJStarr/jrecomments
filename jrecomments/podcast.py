@@ -84,7 +84,8 @@ def update_podcast_library(fetch_all=False):
                 podcast.date = release_date
                 podcast.spotify_id = spotify_id
                 podcast.save()
-    Podcast.objects.filter(id=0).first().delete()
+
+
 def get_podcast_id(data):
     id = data.split('-')[0]
     id = id.replace('#', '')

@@ -1,3 +1,4 @@
+import random
 from itertools import islice
 from time import sleep
 
@@ -6,81 +7,175 @@ from googleapiclient.discovery import build
 import urllib.request
 import json
 import quickle
+from googleapiclient.errors import HttpError
+
+from jrecomments.comment import bulk_create_comments
 from jrecomments.models import Comment, Podcast
 
 
-api_key = 'AIzaSyCiQ7ITLaTYEWp7S6-TgGfLxKANU-AIYfI'
+#api_key = 'AIzaSyCiQ7ITLaTYEWp7S6-TgGfLxKANU-AIYfI'
 
-#api_key = 'AIzaSyAu8N6583jvHYPAGJMVnvG9mC7ce-jPqxA'
+api_key = 'AIzaSyAu8N6583jvHYPAGJMVnvG9mC7ce-jPqxA'
 chanel_id = 'UCzQUP1qoWDoEbmsQxvdjxgQ'
 
 com_cache = {}
 
 
-def youtube_pull_comments(count, max_quota):
-    current = Podcast.objects.all().last().id - 4
-    change = 0
-    if count > 0:
-        while True:
-            current = current - change
-            change += 1
-            youtube_pull_new_comments(current, max_quota)
-            if change == count:
-                break
-@transaction.atomic
-def youtube_pull_new_comments(podcast_id, max_quota):
-    comments_length = Comment.objects.filter(podcast_id=podcast_id).count()
-    if comments_length > 1000:
-        print('Pulling Comments - #' + str(podcast_id) + ' has Comments. Amount: ' + str(comments_length))
-        return
-    youtube_links = get_youtube_links(podcast_id)
-    com_count = 0
-    if youtube_links != None and len(youtube_links) > 0:
-        Comment.objects.filter(podcast_id=podcast_id).delete()
-        max_calls = max_quota / len(youtube_links)
-        #print('Pulling Comments - #'+ str(podcast_id) + ' OC: ' + str(max_quota) + ' MC: ' + str(max_calls))
-        for youtube_link in youtube_links:
-            comments = video_comments(youtube_link, max_calls)
-            comment_ids = []
-            for com in comments:
-                sub_ids = []
+# <editor-fold desc="Pull Youtube Comments">
+def youtube_pull_comments(max_comments=10000):
+    podcasts = Podcast.objects.all()
+    podcasts = list(podcasts)
+    random.shuffle(podcasts)
+    for podcast in podcasts:
+        print('YTSCRAPER: STARTING ON #' + str(podcast.id))
 
-                comment = Comment()
-                comment.username = com[0]
-                comment.comment = com[1]
-                comment.podcast_id = podcast_id
-                comment.date_time = com[2]
-                comment.likes = com[3]
-                comment.sub_count = com[4]
-                comment.popularity = com[3] + (com[4] / 2)
-                comment.save()
-                com_count += 1
-                for reply in com[5]:
-                    sub = Comment()
-                    sub.username = reply[0]
-                    sub.comment = reply[1]
-                    sub.podcast_id = podcast_id
-                    sub.reply_id = comment.id
-                    sub.date_time = reply[2]
-                    sub.likes = reply[3]
-                    sub.popularity = reply[3]
-                    sub.parent_id = comment.id
-                    sub.save()
-                    com_count += 1
-                    sub_ids.append(sub.id)
-                comment.sub_comments = quickle.dumps(sub_ids)
-                comment.save()
-                comment_ids.append(comment.id)
-            podcast = Podcast.objects.filter(id=podcast_id).first()
-            if podcast != None:
-                temp = podcast.comments
-                if temp != None:
-                    temp = quickle.loads(temp)
-                else:
-                    temp = []
-                podcast.comments = quickle.dumps(comment_ids + temp)
-                podcast.save()
-    print('Pulling Comments - #' + str(podcast_id) + ' Collected:' + str(com_count))
+        comments_count = Comment.objects.filter(podcast_id=podcast.id).count()
+        if comments_count > 0:
+            print('Skipping Already Written')
+            continue
+
+        Comment.objects.filter(podcast_id=podcast.id).delete()
+        max_calls = max_comments / 100
+        youtube_links = get_youtube_links(podcast.id)
+        if youtube_links != None:
+            link_length = len(youtube_links)
+            if link_length > 0:
+                max_calls /= link_length
+                for youtube_link in youtube_links:
+                    if youtube_link_valid(podcast, youtube_link):
+                        comments = get_all_top_level_comments(podcast.id, youtube_link, max_calls)
+                        print('YTSCRAPER: Pulled TopLevel #' + str(podcast.id) + ' : ' + str(len(comments)))
+                        for comment in comments:
+                            comment.save()
+                        print('YTSCRAPER: Saved TopLevel #' + str(podcast.id))
+                        print(str(comments[5].id))
+                        sub_comments = []
+                        for comment in comments:
+                            if comment.sub_count > 5:
+                                sub_comments = get_all_sub_comments(podcast.id, comment, 2)
+                                print('YTSCRAPER: Pulled SubLevel #' + str(podcast.id) + ' : ' + str(
+                                    len(sub_comments)))
+                                for sub in sub_comments:
+                                    sub.save()
+                        print('YTSCRAPER: SavedSubs')
+
+
+
+
+def get_all_top_level_comments(podcast_id, video_id, max_calls):
+    comments = []
+    count = 0
+    calls = 1
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    video_response = youtube.commentThreads().list(
+        part='snippet,replies',
+        videoId=video_id,
+        maxResults=100,
+        order='relevance'
+    ).execute()
+    while video_response:
+        for item in video_response['items']:
+            comment = response_data_to_comment(podcast_id, item)
+            comments.append(comment)
+            count += 1
+            if(calls >= max_calls):
+                break
+
+        if 'nextPageToken' in video_response and calls < max_calls :
+            calls += 1
+            video_response = youtube.commentThreads().list(
+                part='snippet,replies',
+                videoId=video_id,
+                maxResults=100,
+                order='relevance',
+                pageToken=video_response['nextPageToken']
+            ).execute()
+        else:
+            break
+
+    return comments
+def get_all_sub_comments(podcast_id, comment, max_calls):
+    comments = []
+    count = 0
+    calls = 1
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    video_response = youtube.comments().list(
+        part='id, snippet',
+        parentId=comment.yt_comment_id,
+        maxResults=100
+    ).execute()
+    while video_response:
+        for item in video_response['items']:
+            commentd = response_data_to_sub_comment(podcast_id, comment.id, comment.yt_video_id, item)
+            comments.append(commentd)
+            count += 1
+            if (calls >= max_calls):
+                break
+
+        if 'nextPageToken' in video_response and calls < max_calls:
+            calls += 1
+            video_response = youtube.comments().list(
+                part='id, snippet',
+                parentId=comment.yt_comment_id,
+                maxResults=100,
+                pageToken=video_response['nextPageToken']
+            ).execute()
+        else:
+            break
+
+    return comments
+def response_data_to_comment(podcast_id, data):
+    snippet = data['snippet']['topLevelComment']['snippet']
+    comment = Comment()
+    comment.podcast_id = podcast_id
+    comment.username = snippet['authorDisplayName']
+    comment.date_time = snippet['publishedAt']
+    comment.likes = snippet['likeCount']
+    comment.sub_count = data['snippet']['totalReplyCount']
+    comment.popularity = snippet['likeCount'] + (data['snippet']['totalReplyCount'] * 2)
+    comment.comment = snippet['textDisplay']
+    comment.is_offsite_comment = True
+    comment.yt_comment_id = data['id']
+    comment.yt_channel_id = snippet['authorChannelId']['value']
+    comment.yt_video_id = snippet['videoId']
+    return comment
+def response_data_to_sub_comment(podcast_id, parent_id, video_id, data):
+    comment = Comment()
+    comment.podcast_id = podcast_id
+    comment.username = data['snippet']['authorDisplayName']
+    comment.date_time = data['snippet']['publishedAt']
+    comment.likes = data['snippet']['likeCount']
+    comment.popularity = data['snippet']['likeCount']
+    comment.comment = data['snippet']['textDisplay']
+    comment.parent_id = parent_id
+    comment.is_offsite_comment = True
+    comment.yt_comment_id = data['id']
+    comment.yt_channel_id = data['snippet']['authorChannelId']['value']
+    comment.yt_video_id = video_id
+    comment.yt_parent_id = data['snippet']['parentId']
+    return comment
+# </editor-fold>
+
+def youtube_link_valid(podcast, youtube_link):
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    video_response = youtube.videos().list(
+        part='snippet',
+        id=youtube_link,
+        maxResults=5
+    ).execute()
+    for item in video_response['items']:
+        if item['id'] == youtube_link:
+            title = item['snippet']['title']
+            description = item['snippet']['description']
+            search = '#' + str(podcast.id) + ' '
+            if search in title or search in description:
+                return True
+            else:
+                print('invalid link saved.')
+                return False
+    print('invalid link saved.')
+    return False
+
 
 
 
@@ -90,7 +185,6 @@ def get_youtube_links(podcast_id):
         youtube_links = podcast.youtube_links
         if youtube_links != None:
             return quickle.loads(youtube_links)
-
     return None
 
 def find_youtube_links(amount=0, max_quota=1000, max_links=5):
@@ -108,28 +202,43 @@ def find_youtube_links(amount=0, max_quota=1000, max_links=5):
         if count >= amount or call_count >= max_calls:
             break
 
-
 def find_youtube_link_task(podcast, max_count=5):
     if podcast != None:
         if podcast.youtube_links != None:
             youtube_links = quickle.loads(podcast.youtube_links)
-            if youtube_links != None and len(youtube_links) > 0:
-                print('FindLinks : #' + str(podcast.id) + ' has links. ' + str(len(youtube_links)))
-                return False
+            if youtube_links:
+                if len(youtube_links) != 0:
+                    print('FindLieeenks : #' + str(podcast.id) + ' has links. ' + str(len(youtube_links)))
+                    return
+
 
         links = []
         count = 0
-        search = '#' + str(podcast.id)
+        search = '#' + str(podcast.id) + ' '
         ## FIND SOME LINKS DUDE
-        youtube = build('youtube', 'v3',developerKey=api_key)
-        video_response = youtube.search().list(
-            part='snippet',
-            channelId=chanel_id,
-            maxResults=50,
-            type='video',
-            q=search,
-            order='relevance'
-        ).execute()
+        try:
+            api_key = 'AIzaSyCiQ7ITLaTYEWp7S6-TgGfLxKANU-AIYfI'
+            youtube = build('youtube', 'v3', developerKey=api_key)
+            video_response = youtube.search().list(
+                part='snippet',
+                channelId=chanel_id,
+                maxResults=50,
+                type='video',
+                q=search,
+                order='relevance'
+            ).execute()
+        except HttpError:
+            api_key = 'AIzaSyAu8N6583jvHYPAGJMVnvG9mC7ce-jPqxA'
+            youtube = build('youtube', 'v3', developerKey=api_key)
+            video_response = youtube.search().list(
+                part='snippet',
+                channelId=chanel_id,
+                maxResults=50,
+                type='video',
+                q=search,
+                order='relevance'
+            ).execute()
+
         while video_response:
             for item in video_response['items']:
                 description = item['snippet']['description']
@@ -146,54 +255,6 @@ def find_youtube_link_task(podcast, max_count=5):
         podcast.save()
         return True
 
-def video_comments(video_id, max_calls):
-    replies = []
-    output = []
-    count = 0
-    calls = 1
-    youtube = build('youtube', 'v3', developerKey=api_key)
-    video_response = youtube.commentThreads().list(
-        part='snippet,replies',
-        videoId=video_id,
-        maxResults=100,
-        order='relevance'
-    ).execute()
-    while video_response:
-        for item in video_response['items']:
-            name = item['snippet']['topLevelComment']['snippet']['authorDisplayName']
-            comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
-            likes = item['snippet']['topLevelComment']['snippet']['likeCount']
-            date = item['snippet']['topLevelComment']['snippet']['publishedAt']
-            reply_count = item['snippet']['totalReplyCount']
-            if reply_count > 0:
-                for reply in item['replies']['comments']:
-                    reply_text = reply['snippet']['textDisplay']
-                    reply_name = reply['snippet']['authorDisplayName']
-                    reply_likes = reply['snippet']['likeCount']
-                    reply_date = reply['snippet']['publishedAt']
-                    replies.append([reply_name, reply_text, reply_date, reply_likes])
-            output.append([name, comment, date, likes, reply_count, replies])
-            count += 1
-            if(calls >= max_calls):
-                break
-            replies = []
-        if 'nextPageToken' in video_response and calls < max_calls :
-            calls += 1
-            video_response = youtube.commentThreads().list(
-                part='snippet,replies',
-                videoId=video_id,
-                maxResults=100,
-                order='relevance',
-                pageToken=video_response['nextPageToken']
-            ).execute()
-        else:
-            break
-
-    f=open("cache.txt", "w")
-    f.write(json.dumps(output))
-    f.close()
-
-    return output
 
 def get_podcast_id(video_name):
     if '#' in video_name:
@@ -231,7 +292,3 @@ def try_int(value):
         return int(value)
     except ValueError:
         return 0
-
-def get_mp4_url_from_podcast_id(podcast_id):
-    search_string = 'PowerfulJRE #' + str(podcast_id)
-    get_all_video_in_channel( )

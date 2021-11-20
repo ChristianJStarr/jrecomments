@@ -1,27 +1,26 @@
 from django.db import models
 import quickle
+from django.utils import timezone
 
 
 class Podcast(models.Model):
     id = models.IntegerField(primary_key=True, default=0)
     name = models.TextField(default='No Name')
-    comments = models.BinaryField(default=None, null=True)
+    comments = models.IntegerField(default=0)
     date = models.DateField(null=True)
     duration = models.TextField(default='0h0m', null=True)
     score = models.IntegerField(default=0)
     popularity = models.IntegerField(default=0)
     spotify_id = models.TextField(default='')
     youtube_links = models.BinaryField(default=None, null=True)
+    last_yt_scrape = models.DateTimeField(default=timezone.now)
 
     def to_quick_list(self):
-        total_comments = 0
-        if self.comments != None:
-            total_comments = len(quickle.loads(self.comments))
         return {'id': self.id,
                 'name': self.name,
                 'duration': self.duration,
                 'date': self.date,
-                'comments': total_comments,
+                'comments': self.comments,
                 'score': self.score,
                 'popularity': self.popularity,
                 'spotify': self.spotify_id}
@@ -38,7 +37,16 @@ class Comment(models.Model):
     sub_count = models.IntegerField(default=0)
     parent_id = models.IntegerField(default=0)
     reply_id = models.IntegerField(default=0)
-    reply_username = models.TextField(default='Unknown Name')
+    reply_username = models.TextField(default='')
+
+
+    ## SCRAPE HELPERS
+    is_offsite_comment = models.BooleanField(default=False)
+    yt_comment_id = models.TextField(default='')
+    yt_channel_id = models.TextField(default='')
+    yt_video_id = models.TextField(default='')
+    yt_parent_id = models.TextField(default='')
+
 
     def to_list(self):
         return {'id': self.id,

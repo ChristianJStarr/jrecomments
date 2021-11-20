@@ -2,9 +2,36 @@ import datetime
 import random
 import re
 import uuid
+from itertools import chain, islice
+
 import quickle
+from django.contrib.auth.models import User
+from django.db import transaction
+
 from jrecomments.models import Podcast, Comment
 from jrecomments.userdata import add_comment_to_userdata
+
+
+
+
+
+def get_comments(podcast_id, offset, amount, username):
+    if len(username) > 2 and offset == 0:
+        comments = Comment.objects.filter(podcast_id=podcast_id, parent_id=0).exclude(username=username).order_by('-popularity')[offset:offset + amount]
+        user_comments = Comment.objects.filter(podcast_id=podcast_id, parent_id=0, username=username).order_by('-popularity')
+        comments = list(chain(user_comments, comments))
+    else:
+        comments = Comment.objects.filter(podcast_id=podcast_id, parent_id=0).order_by('-popularity')[offset:offset + amount]
+    return comments
+
+def get_sub_comments(comment_id, offset, amount, username):
+    if len(username) > 2 and offset == 0:
+        comments = Comment.objects.filter(parent_id=comment_id).exclude(username=username).order_by('-popularity')[offset:offset + amount]
+        user_comments = Comment.objects.filter(parent_id=comment_id, username=username).order_by('-popularity')
+        comments = list(chain(user_comments, comments))
+    else:
+        comments = Comment.objects.filter(parent_id=comment_id).order_by('-popularity')[offset:offset + amount]
+    return comments
 
 
 def create_comment(podcast_id, username, comment_text, parent_id=0, reply_to_id=0):
@@ -61,18 +88,8 @@ def create_comment(podcast_id, username, comment_text, parent_id=0, reply_to_id=
         comment.save()
 
 
-        pod_data = podcast.comments
-        comment_ids = []
-        if pod_data != None:
-            comment_ids = quickle.loads(pod_data)
-        comment_ids.append(comment.id)
-        podcast.comments = quickle.dumps(comment_ids)
+        podcast.comments += 1
         podcast.save()
-
-        if reply_to != None:
-            add_to_sub_comment_cache(reply_to, comment.id)
-        elif parent != None:
-            add_to_sub_comment_cache(parent, comment.id)
 
         add_comment_to_userdata(username, comment)
 
@@ -135,4 +152,14 @@ def try_int(value):
         return int(value)
     except ValueError:
         return 0
+
+def bulk_create_comments(comments, batch_size):
+    count = 0
+    while True:
+        count += 1
+        batch = list(islice(comments, batch_size))
+        if not batch:
+            break
+        Comment.objects.bulk_create(batch, batch_size)
+
 

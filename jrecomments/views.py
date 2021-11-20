@@ -2,78 +2,38 @@ from time import sleep
 import django.middleware.csrf
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import JsonResponse, Http404
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDictKeyError
-from django.views.decorators.cache import cache_page
 import quickle
-from jrecomments.comment import create_comment
+from jrecomments.comment import create_comment, get_comments, get_sub_comments
 from jrecomments.models import Podcast, Comment, UserData
-from jrecomments.podcast import podcast_to_list, update_podcast_library, parent_fix
+from jrecomments.podcast import podcast_to_list, update_podcast_library
 from jrecomments.userdata import add_like_to_userdata, remove_like_from_userdata, get_podcast_data_for_user
-
-# CACHING TIMES
-from jrecomments.youtube import video_comments, find_youtube_links, youtube_pull_comments, find_youtube_link_task, \
-    get_youtube_links, youtube_pull_new_comments
-
-long_expire_cache = 48 * 60 * 60 # 48 Hours
-default_expire_cache = 2 * 60 * 60 # 2 Hours
-auto_update_expire = 15
-urgent_expire_cache = 60 # 1 Minute
+from jrecomments.youtube import youtube_pull_comments
 
 # SIMULATED REQUEST DELAY
-simulated_delay = 0.00
+simulated_delay = 0.50
 
 
-#########################################
-####              PAGES              ####
-#########################################
-
+# <editor-fold desc="PAGES">
 # INDEX
-#@cache_page(urgent_expire_cache)
 def index_views(request):
-    ## EVERY DAY
-    #find_youtube_links(2000, 10000) ## Looks for (x) amount of new podcasts on youtube
-    #youtube_pull_comments(1, 1000) ## Looks at (x) amount of new podcasts for (y) amount of comments each Cost:
-    #sort_comment_ids()
-    #find_youtube_link_task(1732)
-    #print(str(get_youtube_links(1732)))
-    #youtube_pull_comments()
-    #check_bad_comments()
-    #update_podcast_library(False)
-    #Comment.objects.all().delete()
-    #youtube_pull_comments(500, 70)
-    #popularity_check()
-    #parent_fix()
-    #find_youtube_links(0, 3000)
-    #save_comments(1732, '51aDpx6ULz8', 250)
-    #save_comments(1732, '2b9-tsND40g', 250)
-    #save_comments(1731, 'QHQzoHolWvI', 250)
-    #save_comments(1731, 'xq9h2FSNIYM', 250)
-
     data = { 'total_comment_count': '864,952' }
     return render(request, 'main.html', data)
 
-def proto(request):
-    return render(request, 'proto.html', {'data': None})
-
-
 # PRIVACY POLICY PAGE
-@cache_page(long_expire_cache)
 def privacy_views(request):
     return render(request, 'privacy.html')
 
 # TERMS AND CONDITIONS PAGE
-@cache_page(long_expire_cache)
 def terms_views(request):
     return render(request, 'terms.html')
+# </editor-fold>
 
-#########################################
-####          REG PIPELINE           ####
-#########################################
-
-# GET ALL PODCAST DATA
-#@cache_page(default_expire_cache)
+# <editor-fold desc="REG PIPELINE">
+### GET ALL PODCAST DATA
 def podcasts(request):
     sleep(simulated_delay)
     output = {}
@@ -83,8 +43,7 @@ def podcasts(request):
             output[podcast.id] = podcast.to_quick_list()
     return JsonResponse({'podcasts': output })
 
-# GET SPECIFIC PODCAST DATA
-#@cache_page(auto_update_expire)
+### GET SPECIFIC PODCAST DATA
 def podcast(request, id):
     sleep(simulated_delay)
     comments = 0
@@ -104,49 +63,38 @@ def podcast(request, id):
         return JsonResponse({'podcast': podcast_to_list(podcast, total_comments) })
     return Http404()
 
-# GET MASTER COMMENTS
-#@cache_page(urgent_expire_cache)
-def comments_master(request, id, amount, offset):
-    offset = int(offset)
-    amount = int(amount)
-    amount += offset
-    sleep(simulated_delay)
+### Request Comments of PodcastId
+def comments_master(request, id, amount, offset, username=''):
+    youtube_pull_comments()
+
+
+    if simulated_delay > 0: sleep(simulated_delay)
     output = {}
-    total_comments = 0
-    comments = Comment.objects.filter(podcast_id=id, parent_id=0).order_by('-popularity')
-    comments = comments[offset:amount]
+    comments = get_comments(id, offset, amount, username)
     for comment in comments:
-        if comment != None:
-            output[comment.id] = comment.to_list()
+        output[comment.id] = comment.to_list()
     return JsonResponse({'comments': output})
 
-# GET SUB COMMENTS OF MASTER
-@cache_page(urgent_expire_cache)
-def comments_sub(request, id, amount, offset):
-    sleep(simulated_delay)
-    comments = dict()
+### Request Sub Comments of CommentId
+def comments_sub(request, id, amount, offset, username=''):
+    if simulated_delay > 0: sleep(simulated_delay)
+    output = {}
     total_comments = 0
-    parent = Comment.objects.filter(id=id).first()
-    if parent != None:
-        total_comments = parent.sub_count
-    data = Comment.objects.filter(parent_id=id)[int(offset):int(amount)]
-    if data != None:
-        for comment in data:
-            comments[comment.id] = comment.to_list()
-    return JsonResponse({'comments_total': total_comments, 'comments': comments})
+    comments = get_sub_comments(id, offset, amount, username)
+    for comment in comments:
+        output[comment.id] = comment.to_list()
+    return JsonResponse({'comments_total': total_comments, 'comments': output})
 
-# GET SPECIFIC USER DATA
+### GET SPECIFIC USER DATA
 def podcast_user_data(request, id):
     if request.user.is_authenticated:
         user_data = get_podcast_data_for_user(request.user.get_username(), id)
         if user_data != None:
             return JsonResponse({'status': 'success', 'userData': user_data})
     return JsonResponse({'status': 'failed'})
+# </editor-fold>
 
-#########################################
-####        QUICK APP ACTIONS        ####
-#########################################
-
+# <editor-fold desc="QUICK APP ACTIONS">
 # MAKE A COMMENT
 def comment(request, id, parent_id=0, reply_to_id=0):
     if request.method == 'POST':
@@ -227,101 +175,77 @@ def logout_action(request):
 # REQUEST NEW CSRF TOKEN
 def request_token(request):
     return JsonResponse({'status': 'success','newToken': django.middleware.csrf.get_token(request)})
+# </editor-fold>
 
-#########################################
-####          SERVER TASKS           ####
-#########################################
+# <editor-fold desc="SERVER TASKS">
+def daily_task():
+    update_podcast_library(False)
+    youtube_pull_comments(100)
+    calculate_comment_popularity()
+    calculate_podcast_popularity()
+    fix_comment_replies()
 
-# UPDATE POPULARITY ON PODCASTS
-def popularity_check(podcast_id=0):
-    specifc = ''
-    if podcast_id != 0:
-        specifc = ' on #' + str(podcast_id)
-    print('Popularity Check: Started' + specifc)
+def calculate_comment_popularity():
+    batch_size = 25000
+    offset = 0
+    comments = []
+    total = Comment.objects.all().count()
+    print(total)
+    while True:
+        comments = Comment.objects.all()[offset:offset + batch_size]
+        offset += batch_size
+        if len(comments) == 0:
+            break
+        for comment in comments:
+            comment.popularity = comment.likes + (comment.sub_count * 2)
+            print(comment.popularity)
+        Comment.objects.bulk_update(comments, ['popularity'])
+        print('Calculating Popularity: ' + str(int((offset / total) * 100)) + '%')
+    return
 
-    if podcast_id != 0:
-        podcast = Podcast.objects.filter(id=podcast_id).first()
-        if podcast != None:
-            comments = Comment.objects.filter(podcast_id=podcast.id, parent_id=0)
-            com_pop = 0
-            for comment in comments:
-                sub_comments = Comment.objects.filter(podcast_id=podcast.id, parent_id=comment.id)
-                sub_pop = 0
-                for sub in sub_comments:
-                    pop = sub.likes + (sub.sub_count * 2)
-                    sub.popularity = pop
-                    sub_pop += pop
-                    sub.save()
-                pop = comment.likes + (comment.sub_count * 2) + sub_pop
-                comment.popularity = pop
-                com_pop += pop
-                comment.save()
-            podcast.popularity = com_pop
-            podcast.save()
-            print('Check Done For #' + str(podcast.id) + ' POP: ' + str(com_pop))
-    else:
-        podcasts = Podcast.objects.all()
-        for podcast in podcasts:
-            comments = Comment.objects.filter(podcast_id=podcast.id, parent_id=0)
-            com_pop = 0
-            total_likes = 0
-            for comment in comments:
-                if comment.sub_count > 0:
-                    sub_comments = Comment.objects.filter(podcast_id=podcast.id, parent_id=comment.id)
-                    sub_pop = 0
-                    for sub in sub_comments:
-                        total_likes += sub.likes
-                        pop = sub.likes + (sub.sub_count * 2)
-                        sub.popularity = pop
-                        sub_pop += pop
-                        sub.save()
-                    pop = comment.likes + (comment.sub_count * 2) + sub_pop
-                else:
-                    pop = comment.likes + (comment.sub_count * 2)
-                total_likes += comment.likes
-                comment.popularity = pop
-                com_pop += pop
-                if pop != 0:
-                    comment.save()
-            podcast.popularity = com_pop
-            podcast.score = total_likes
-            podcast.save()
-            print('Check Done For #' + str(podcast.id) + ' POP: ' + str(com_pop))
-
-    print('Popularity Check: Finished')
-
-
-def sort_comment_ids():
-    podcasts = Podcast.objects.all()
-
+def calculate_podcast_popularity():
+    podcasts = Podcast.objects.all().order_by('-id')
     for podcast in podcasts:
-        lib = {}
-        if podcast != None and podcast.comments != None:
-            comment_ids = quickle.loads(podcast.comments)
-            total_comments = len(comment_ids)
-            if comment_ids != None and total_comments > 0:
-                for comment_id in comment_ids:
-                    comment = Comment.objects.filter(id=comment_id, podcast_id=podcast.id, parent_id=0).first()
-                    if comment != None:
-                        popularity = comment.likes + (comment.sub_count / 2)
-                        comment.popularity = popularity
-                        lib[comment.id] = [popularity]
-                        comment.save()
-            lib = dict(sorted(lib.items(), key=lambda item: item[1]))
-            temp = []
-            keys = lib.keys()
-            for key in keys:
-                temp.append(key)
-            podcast.comments = quickle.dumps(temp)
-            podcast.save()
+        comments = Comment.objects.filter(podcast_id=podcast.id)
+        likes = 0
+        coms = 0
+        for comment in comments:
+            coms += 1 + comment.sub_count
+            likes += comment.likes
+        podcast.popularity = likes + (coms * 2)
+        podcast.score = likes
+        podcast.comments = coms
+        print(str(podcast.popularity) + ' #' + str(podcast.id))
+    Podcast.objects.bulk_update(podcasts, ['popularity', 'score', 'comments'])
+
+def fix_comment_replies():
+    replies = 0
+    podcasts = Podcast.objects.all()
+    for podcast in podcasts:
+        comments = Comment.objects.filter(podcast_id=podcast.id).exclude(parent_id=0)
+        usernames = []
+        for comment in comments:
+            usernames.append([comment.username, comment.id])
+
+        for comment in comments:
+            for username in usernames:
+                if comment.comment.startswith('@' + username[0]):
+                    comment.comment = comment.comment[len(username[0]) + 1:]
+                    comment.reply_username = username[0]
+                    comment.reply_id = username[1]
+                    replies += 1
+        if len(comments) > 0:
+            Comment.objects.bulk_update(comments, ['comment', 'reply_username', 'reply_id'])
+        print('Done For #' + str(podcast.id))
+
+def wipe_podcast(podcast_id):
+    podcast = Podcast.objects.filter(id=podcast_id).first()
+    podcast.comments = 0
+    podcast.score = 0
+    podcast.popularity = 0
+    podcast.save()
+    Comment.objects.filter(podcast_id=podcast_id).delete()
+# </editor-fold>
 
 
-
-
-
-def try_int(value):
-    try:
-        return int(value)
-    except ValueError:
-        return 0
 

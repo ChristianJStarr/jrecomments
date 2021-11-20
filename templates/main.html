@@ -72,7 +72,6 @@
             <!-- PAGE NAV -->
             <nav  class="{% if user.is_authenticated %}authenticated{% endif %}">
                 <h1>[ THE UNOFFICIAL JRE COMMENT SECTION  ]</h1>
-                {% if user.is_authenticated or True %}
                     <div class="auth-wrap{% if user.is_staff %} is-staff{% endif %}">
                         {% if user.is_staff %}
                             <div class="admin-menu">
@@ -85,7 +84,6 @@
                         <a class="username-preview">[ {{ user.get_username }} ]</a>
                         <a class="logout-button">[ LOGOUT ]</a>
                     </div>
-                {% endif %}
             </nav>
 
             <!-- LOADING SPINNER -->
@@ -222,7 +220,7 @@
 
             <!-- FOOTER -->
             <footer>
-                <h2>Made with <i class="icon-heart heart"></i> from Flint, MI</h2>
+                <h2>Made with <i class="icon-heart heart"></i> from Michigan</h2>
                 <div id="donate">
                         <a class="wallet-address copy-to-clipboard" address-data="bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf">bc1q2dj63m036a4vwqsefxc2znl7ax8sw9kwms92vf<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
                         <a class="wallet-address copy-to-clipboard" address-data="0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66">0x57b7c9EB495797201894B1DAA0cE9B49B03f4E66<i class="copy-notify">COPIED TO CLIPBOARD</i></a>
