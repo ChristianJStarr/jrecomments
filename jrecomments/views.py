@@ -14,7 +14,7 @@ from jrecomments.userdata import add_like_to_userdata, remove_like_from_userdata
 from jrecomments.youtube import youtube_pull_comments
 
 # SIMULATED REQUEST DELAY
-simulated_delay = 0.50
+simulated_delay = 0.00
 
 
 # <editor-fold desc="PAGES">
