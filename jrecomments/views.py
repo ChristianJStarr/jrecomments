@@ -65,9 +65,6 @@ def podcast(request, id):
 
 ### Request Comments of PodcastId
 def comments_master(request, id, amount, offset, username=''):
-    youtube_pull_comments()
-
-
     if simulated_delay > 0: sleep(simulated_delay)
     output = {}
     comments = get_comments(id, offset, amount, username)
