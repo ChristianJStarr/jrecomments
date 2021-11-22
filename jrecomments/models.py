@@ -62,6 +62,6 @@ class Comment(models.Model):
 
 
 class UserData(models.Model):
-    models.CharField(primary_key=True, max_length=80)
+    models.CharField(max_length=80)
     comments = models.BinaryField(default=None, null=True)
     likes = models.BinaryField(default=None, null=True)
