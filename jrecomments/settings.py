@@ -77,9 +77,16 @@ WSGI_APPLICATION = 'jrecomments.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
+    #'default': {
+    #    'ENGINE': 'django.db.backends.sqlite3',
+    #    'NAME': BASE_DIR / 'db.sqlite3',
+    #},
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jrecomments$default',
+        'USER': 'jrecomments',
+        'PASSWORD': '7]g%BP{MuCvNF]e#',
+        'HOST': 'jrecomments.mysql.pythonanywhere-services.com',
     }
 }
 
