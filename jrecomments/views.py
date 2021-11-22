@@ -41,7 +41,7 @@ def save_db_json():
         if podcast.youtube_links != None:
             output[podcast.id] = quickle.loads(podcast.youtube_links)
 
-    f = open("/home/jrecomments/youtube-links.txt", "a")
+    f = open("youtube-links.txt", "a")
     f.write(json.dumps(output))
     f.close()
 
@@ -54,7 +54,7 @@ def load_db_json():
     for podcast in podcasts:
         output[podcast.id] = podcast.youtube_links
 
-    f = open("youtube-links.txt", "r")
+    f = open("/home/jrecomments/jrecomments/youtube-links.txt", "r")
     data = json.loads(f.read())
     for index in data:
         podcast = Podcast.objects.filter(id=index).first()
