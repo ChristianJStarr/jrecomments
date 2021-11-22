@@ -28,7 +28,7 @@ class Podcast(models.Model):
 
 class Comment(models.Model):
     podcast_id = models.IntegerField(default=0)
-    models.CharField(max_length=80)
+    username = models.CharField(max_length=80)
     date_time = models.DateTimeField()
     likes = models.IntegerField(default=0)
     popularity = models.IntegerField(default=0)
