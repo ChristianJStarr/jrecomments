@@ -21,6 +21,7 @@ simulated_delay = 0.00
 # <editor-fold desc="PAGES">
 # INDEX
 def index_views(request):
+    update_podcast_library(True)
     load_db_json()
     data = { 'total_comment_count': '864,952' }
     return render(request, 'main.html', data)
