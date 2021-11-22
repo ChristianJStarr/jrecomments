@@ -19,7 +19,9 @@ def get_comments(podcast_id, offset, amount, username):
     if len(username) > 2 and offset == 0:
         comments = Comment.objects.filter(podcast_id=podcast_id, parent_id=0).exclude(username=username).order_by('-popularity')[offset:offset + amount]
         user_comments = Comment.objects.filter(podcast_id=podcast_id, parent_id=0, username=username).order_by('-popularity')
-        comments = list(chain(user_comments, comments))
+        comments =  list(user_comments) + list(comments)
+        print('USER COMS LENGTH ' + str(len(user_comments)) + comments[0].username)
+
     else:
         comments = Comment.objects.filter(podcast_id=podcast_id, parent_id=0).order_by('-popularity')[offset:offset + amount]
     return comments

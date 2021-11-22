@@ -16,6 +16,7 @@ var liked;
 var disliked;
 var canClick = true;
 var search = '';
+var lastSearch = '';
 var sort = 'popular';
 var hitBottom = false;
 var addonOffset = 0;
@@ -31,7 +32,7 @@ var playingId = 0;
 var playerSrc = 'https://open.spotify.com/embed/episode/{0}?utm_source=generator&theme=0';
 var currentPlayingGlowInterval;
 
-var commentsLoaded = 0;
+var commentsLoaded = 5;
 var currentReplyId = 0;
 //</editor-fold>
 
@@ -209,9 +210,10 @@ function updatePodcastView(loadin=false){
     if(search != ''){
         var searchTemp = search.toUpperCase();
         currentSearch = searchTemp;
-        $('#search-submit').val('CLEAR');
+        $('.search-submit').text('CLEAR');
         view = view.filter(function(element){
-            if(element[0].toString().includes(searchTemp) || element[1].toString().toUpperCase().includes(searchTemp) || element[3].toString().includes(searchTemp)){
+            lastSearch = search;
+            if(element.id.toString().includes(searchTemp) || element.name.toUpperCase().includes(searchTemp)){
                 return true;
             }
         });
@@ -388,10 +390,10 @@ function turnOn(podcast){
     content.removeClass('hidden');
     // EXTEND PODCAST
     podcast.addClass('extended');
-
     // Check if Logged In
     if(passiveUpdate){
         //Just update loaded content :) That cant be that hard right?
+        performPassiveUpdate();console.log('check2');
     }
     else{
         if(isLoggedIn()){
@@ -417,7 +419,7 @@ function turnOn(podcast){
             "name": podcastData[1]
         });
     }
-
+    commentsLoaded = 5;
     opened = podcastId;
     $('.coms').scroll(function(){
         var scroll = $(this).scrollTop() + $(this).innerHeight();
@@ -471,14 +473,26 @@ function scrollTo(selector) {
     }, "fast");
 }
 
+function performPassiveUpdate(){
+    var coms = $('.com .populated');
+    if(coms.length > 0){
+        console.log('check');
+    }
+    else if (opened != 0){
+        getCommentsMaster(opened, max_podcasts_initial, 0);
+    }
+}
 
 //</editor-fold>
 
 //<editor-fold desc="COMMENTING">
 
 // Comment Updating
-function getCommentsMaster(podcastId, amount, offset){
+function getCommentsMaster(podcastId, amount, offset, scrollTo=0){
     var pageUrl = '/data/master/' + podcastId + '/comments/' + amount + '/' + offset + '/';
+    if(window.authenticated){
+        pageUrl = '/data/master/' + podcastId + '/comments/' + amount + '/' + offset + '/' + window.username + '/';
+    }
     var comments = []
     $.ajax({
         type: 'GET',
@@ -486,7 +500,7 @@ function getCommentsMaster(podcastId, amount, offset){
         dataType: 'json',
         success: function (data) {
             var loadCount = Object.keys(data.comments).length;
-            drawCommentsToViewport(podcastId,data.comments, loadCount, offset);
+            drawCommentsToViewport(podcastId,data.comments, loadCount, offset, scrollTo);
         },
         error: function (error){
             console.log(error);
@@ -494,10 +508,11 @@ function getCommentsMaster(podcastId, amount, offset){
     });
 }
 function getCommentsSub(commentId, amount, offset){
-
     toggleLoadRing(true);
-
     var pageUrl = '/data/sub/' + commentId + '/comments/' + amount + '/' + offset + '/';
+    if(window.authenticated){
+        pageUrl = '/data/sub/' + commentId + '/comments/' + amount + '/' + offset + '/' + window.username + '/';
+    }
     var comments = []
     $.ajax({
         type: 'GET',
@@ -539,7 +554,7 @@ function getCommentsSub(commentId, amount, offset){
 }
 
 
-function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
+function drawCommentsToViewport(podcastId, commentData, loadCount, offset, scrollTo=0){
     var podcast = getPodcast(podcastId);
     if(podcast !== undefined){
         var content = podcast.find('.coms');
@@ -568,6 +583,7 @@ function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
                     comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
                     com.find('.com-subs').text('');
                     count += 1;
+                    updateComment(podcastId, comment.id);
                 });
 
                 // Remove Extra Existing Coms
@@ -600,9 +616,11 @@ function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
                             comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
                             com.find('.com-subs').text('');
                             count += 1;
+                            updateComment(podcastId, comment.id);
                         }
                         else{
                             content.append(formatComment(comment_template, comment));
+                            updateComment(podcastId, comment.id);
                             commentsLoaded += 1;
                         }
 
@@ -613,6 +631,7 @@ function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
                     // Create and Append Coms
                     $.each(commentData, function (index, comment){
                         content.append(formatComment(comment_template, comment));
+                        updateComment(podcastId, comment.id);
                         commentsLoaded += 1;
                     });
                 }
@@ -639,6 +658,7 @@ function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
                     comBar.find('.com-comment').html('<i class="icon-comment"></i>' + nFormatter(comment.subCount, 1));
                     com.find('.com-subs').text('');
                     count += 1;
+                    updateComment(podcastId, comment.id);
                 });
                 // Make Coms Visible
                 $('.com').addClass('populated');
@@ -648,12 +668,16 @@ function drawCommentsToViewport(podcastId, commentData, loadCount, offset){
             // Create and Append Coms
             $.each(commentData, function (index, comment){
                 content.append(formatComment(comment_template, comment));
+                updateComment(podcastId, comment.id);
                 commentsLoaded += 1;
             });
             $('.com').addClass('populated');
         }
 
         $('.text-place').hide();
+        if(scrollTo != 0){
+            scrollToComment($('#' + scrollTo));
+        }
     }
 }
 
@@ -894,7 +918,7 @@ function addLikeSuccess(podcastId, commentId){
     }
 }
 function addLikeFailed(errorMessage) {
-    console.log(errorMessage);
+    console.log('Like Podcast: ' + errorMessage);
 }
 // Remove Like from Comment
 function removeLike(podcastId, commentId){
@@ -948,7 +972,7 @@ function removeLikeSuccess(commentId){
     }
 }
 function removeLikeFailed(errorMessage){
-    console.log(errorMessage);
+    console.log('Dislike Podcast: ' + errorMessage);
 }
 // Locally Change Like Count on Comment
 function addToCommentLikes(commentId, amount){
@@ -986,12 +1010,189 @@ function submitCommentSuccess(podcastId, commentId, parentId, replyToId, subComm
         }
         getCommentsSub(parentId, loaded, 0);
     }else{
-        getCommentsMaster(podcastId, 50, 0);
+        getCommentsMaster(podcastId, max_comments_intial, 0, commentId);
     }
 }
 function submitCommentFailed(errorMessage){
     console.log(errorMessage);
 }
+
+// Register Comment Events
+function registerCommentEvents(){
+    // Check and Ask for Nickname
+    $(document).on('click', '.comment-input', function(){
+        if(!isLoggedIn()){
+            promptForLogin();
+        }
+    });
+    //Submit Comment
+    $(document).on('click', '.comment-submit', function(){
+        var podcast = $(this).parent().parent().parent();
+        if(podcast == null){return}
+        var podcastId = podcast.attr('id').split('-')[1];
+        var comment_input = podcast.find('.comment-input');
+        var comment_text = comment_input.html();
+        var pop = comment_input.find('.pop');
+        if(pop != undefined){
+            comment_text = comment_text.replace(pop.prop('outerHTML'), "");
+        }
+        var masterId = currentReplyId;
+        var user_id = 0;
+        if(masterId !== 0){
+            masterId = $('#' + currentReplyId).attr('masterId');
+            if(masterId == undefined){
+                masterId = 0;
+            }
+        }
+        submitComment(podcastId, user_id, comment_text, masterId, currentReplyId);
+    });
+    $(document).on('keypress','.comment-input', function (e) {
+        if(e.which === 13 && !e.shiftKey){
+            var podcast = $(this).parent().parent().parent();
+            $(this).attr("disabled", "disabled");
+            var podcastId = podcast.attr('id').split('-')[1];
+            var comment_input = podcast.find('.comment-input');
+            var comment_text = comment_input.html();
+            var pop = comment_input.find('.pop');
+            if(pop != undefined){
+                comment_text = comment_text.replace(pop.prop('outerHTML') + '&nbsp;', "");
+            }
+            var masterId = currentReplyId;
+            var user_id = 0;
+            if(masterId !== 0){
+                masterId = $('#' + currentReplyId).attr('masterId');
+                if(masterId == undefined){
+                    masterId = 0;
+                }
+            }
+            submitComment(podcastId, user_id, comment_text, masterId, currentReplyId);
+            $(this).removeAttr("disabled");
+        }
+    });
+    $(document).on('keydown', '.comment-input', function(){
+        var commentInput = $(this);
+        setTimeout(function(){
+            if(commentInput.find('.pop').length == 0){
+                currentReplyId = 0;
+            }
+        }, 500);
+    });
+    $(document).on('click', '.pop i', function(){
+        $(this).parent().remove();
+        currentReplyId = 0;
+    });
+    //When Types in Comment-Input
+    $(document).on('change keyup paste', '.comment-input', function() {
+        var totalLength = $(this).val().length;
+        var commentInputWrap = $(this).parent();
+        var podcast = commentInputWrap.parent().parent();
+        commentInputWrap.find('.comment-max-char').text(totalLength);
+        var currentVal = $(this).val().split('\n').length - navigator.userAgent.indexOf("MSIE");
+        if(totalLength > 2){
+            commentInputWrap.find('.submit').addClass('interactable');
+        }
+        else{
+            commentInputWrap.find('.submit').removeClass('interactable');
+        }
+        if(currentVal > 2 || totalLength > 35){
+            if(!podcast.hasClass('enlarge')){
+                podcast.find('.comment').addClass('enlarge');
+                podcast.find('.coms').addClass('enlarge-edit');
+                podcast.find('.comments-wrap').addClass('enlarge-edit-wrap');
+            }
+        }
+        else{
+            if(podcast.hasClass('enlarge')){
+                podcast.find('.comment').removeClass('enlarge');
+                podcast.find('.coms').removeClass('enlarge-edit');
+                podcast.find('.comments-wrap').removeClass('enlarge-edit-wrap');
+            }
+        }
+    });
+    //Like Comment
+    $(document).on('click', '.com-like', function(){
+        if(canClickAgain()) {
+            waLikeComment($(this).parent().parent().attr('id'));
+        }
+    });
+    //Disike Comment
+    $(document).on('click', '.com-dislike', function(){
+        if(canClickAgain()) {
+            waDislikeComment($(this).parent().parent().attr('id'));
+        }
+    });
+    //Extend Comments
+    $(document).on('click', '.com-comment, .com-reply', function(){
+        if(canClickAgain()) {
+            var comment = $(this).parent().parent();
+            var isReplyBtn = ($(this).hasClass('com-reply'));
+            if (comment != undefined) {
+                var commentId = comment.attr('id');
+                var podcastId = comment.attr('podcastId');
+                var name = comment.find('.com-name').text();
+                if (comment.attr('masterId') !== '0') {
+                    return;
+                }
+                if (comment.attr('extended') !== 'yes') {
+                    scrollToComment(comment);
+                    if (isReplyBtn) {
+                        if (isLoggedIn()) {
+                            enableCommentLoadBar(commentId);
+                            getCommentsSub(commentId, 5, 0);
+                        } else {
+                            promptForLogin();
+                            enableCommentLoadBar(commentId);
+                            getCommentsSub(commentId, 5, 0);
+                        }
+                    } else {
+                        enableCommentLoadBar(commentId);
+                        getCommentsSub(commentId, 5, 0);
+                    }
+                } else if (!isReplyBtn) {
+                    comment.attr('extended', 'no');
+                    comment.find('.com-subs').text('');
+                    comment.find('.com-sub-extend').hide();
+                    comment.find('.com-subs').css('padding-bottom', '0');
+                    comment.attr('loaded', 0);
+                    comment.find('.com-subs').css('border-top', 'none');
+                    comment.find('.com-subs').css('background', 'transparent');
+                }
+
+                //Extended Comment Analytic
+                //commentId podcastId name
+            }
+        }
+    });
+    //Set Reply
+    $(document).on('click', '.com-reply', function(){
+        var comment = $(this).parent().parent();
+        if(comment != null){
+            var commentId = comment.attr('id');
+            var podcastId = comment.attr('podcastId');
+            var name = comment.find('.com-name').text();
+            var color = comment.find('.com-name').css('color');
+            currentReplyId = commentId;
+            setInputPop(podcastId, name,color);
+
+            //Reply To Comment Analytic
+            //commentId podcastId name
+        }
+    });
+
+    //Sub Comment Section Extend Btn
+    $(document).on('click', '.com-sub-extend', function(){
+        if(canClickAgain()) {
+            var com = $(this).parent().parent();
+            if (com.attr('loaded') !== undefined) {
+                var loaded = parseInt(com.attr('loaded'));
+                getCommentsSub(com.attr('id'), 5, loaded)
+            }
+        }
+    });
+
+}
+
+
 //</editor-fold>
 
 //<editor-fold desc="LOGIN / SIGNUP">
@@ -1008,7 +1209,7 @@ function promptForLogin(){
     setTimeout(function (){
         usernameField.select(); }, 250);
     usernameField.on('change keyup paste', function (){
-        var username = usernameField.val();
+        var username = usernameField.val().toLowerCase();
         var password = passwordField.val();
         if(username.length > 4){
             if(password.length > 5){
@@ -1025,7 +1226,7 @@ function promptForLogin(){
         }
     });
     passwordField.on('change keyup paste', function (){
-        var username = usernameField.val();
+        var username = usernameField.val().toLowerCase();
         var password = passwordField.val();
         if(username.length > 4){
             if(password.length > 5){
@@ -1040,8 +1241,62 @@ function promptForLogin(){
             usernameField.css('color', 'lightgrey');
         }
     });
+    usernameField.on('keypress', function (e) {
+        if(e.which === 13 && !e.shiftKey){
+            var usernameV = usernameField.val().toLowerCase();
+            var passwordV = passwordField.val();
+            if(usernameV.length > 4 && passwordV.length > 5){
+                passwordV = CryptoJS.MD5(passwordV).toString();
+
+                var pageUrl = '/action/login/';
+                $.ajax({
+                    type: 'POST',
+                    url: pageUrl,
+                    data: { password: passwordV, username: usernameV, csrfmiddlewaretoken: window.CSRF_TOKEN },
+                    dataType: 'json',
+                    success: function (data) {
+                        if(data.status == 'success'){
+                            var pageUrl = '/action/request-token/';
+                            $.ajax({
+                                type: 'GET',
+                                url: pageUrl,
+                                dataType: 'json',
+                                success: function (datatwo) {
+                                    if(datatwo.status == 'success'){
+                                        $('#authentication').hide();
+                                        $('#authentication .error').hide();
+                                        window.username = usernameV;
+                                        window.CSRF_TOKEN = datatwo.newToken;
+                                        $('.username-preview').text('[ ' + usernameV + ' ]');
+                                        window.authenticated = true;
+                                        $('#wrap').addClass('authenticated');
+                                        $('nav').addClass('authenticated');
+                                        $('.comment-input').select();
+                                    }
+                                    else{
+                                        location.reload();
+                                    }
+                                },
+                                error: function (error){
+                                    location.reload();
+                                }
+                            });
+                        }
+                        else{
+                            $('#authentication .error').show();
+                            $('#authentication .error').text(data.reason);
+                            $('#authentication input[type=text]').focus();
+                        }
+                    },
+                    error: function (error){
+                        console.log(error);
+                    }
+                });
+            }
+        }
+    });
     continueBtn.on('click', function (){
-        var usernameV = usernameField.val();
+        var usernameV = usernameField.val().toLowerCase();
         var passwordV = passwordField.val();
         if(usernameV.length > 4 && passwordV.length > 5){
             passwordV = CryptoJS.MD5(passwordV).toString();
@@ -1161,6 +1416,9 @@ function waRequestUserDataProcComments(podcastId){
                 storeNewUserData(podcastId, data.userData);
                 getCommentsMaster(podcastId, max_comments_intial, 0);
             }
+            else{
+                getCommentsMaster(podcastId, max_comments_intial, 0);
+            }
         },
         error: function (error){console.log(error);}
     });
@@ -1234,17 +1492,24 @@ function waSubmitComment(podcastId, userId, commentText, parentId=0, replyToId=0
 // Like Comment
 function waLikeComment(commentId){
     var pageUrl = '/action/like/' + commentId + '/';
-    $.ajax({type: 'GET',url: pageUrl,dataType: 'json',
-        success: function (data) {
-            if(data.status == 'success'){
-                addLikeSuccess(commentId);
-            }
-            else{
-                addLikeFailed(data.reason);
-            }
-        },
-        error: function (error){console.log(error);}
-    });
+
+    if(isLoggedIn()){
+        $.ajax({type: 'GET',url: pageUrl,dataType: 'json',
+            success: function (data) {
+                if(data.status === 'success'){
+                    addLikeSuccess(commentId);
+                }
+                else{
+                    addLikeFailed(data.reason);
+                }
+            },
+            error: function (error){console.log(error);}
+        });
+    }
+    else{
+        promptForLogin();
+    }
+
     if(window.analytics) {
         gtag('event', 'comment_like', {
             "id": commentId
@@ -1255,17 +1520,24 @@ function waLikeComment(commentId){
 // Dislike Comment
 function waDislikeComment(commentId){
     var pageUrl = '/action/dislike/' + commentId + '/';
-    $.ajax({type: 'GET',url: pageUrl,dataType: 'json',
-        success: function (data) {
-            if(data.status == 'success'){
-                removeLikeSuccess(commentId);
-            }
-            else{
-                removeLikeFailed(data.reason);
-            }
-        },
-        error: function (error){console.log(error);}
-    });
+
+    if(isLoggedIn()){
+        $.ajax({type: 'GET',url: pageUrl,dataType: 'json',
+            success: function (data) {
+                if(data.status === 'success'){
+                    removeLikeSuccess(commentId);
+                }
+                else{
+                    removeLikeFailed(data.reason);
+                }
+            },
+            error: function (error){console.log(error);}
+        });
+    }
+    else{
+        promptForLogin();
+    }
+
     if(window.analytics) {
         gtag('event', 'comment_dislike', {
             "id": commentId
@@ -1435,7 +1707,8 @@ function getColorOfString(inputString){
 
 // Register Page Events
 function registerPageEvents(){
-    $(document).on('click', '#logout-button', function (){
+    $(document).on('click', '.logout-button', function (){
+        console.log('logout');
         var pageUrl = '/action/logout/';
         $.ajax({
             type: 'GET',
@@ -1449,6 +1722,7 @@ function registerPageEvents(){
                     waRequestNewToken();
                 }
                 else{
+                    console.log('logout failed');
                 }
             },
             error: function (error){
@@ -1456,20 +1730,46 @@ function registerPageEvents(){
             }
         });
     });
-    $(document).on('change', '#search-bar', function(){
-        search = $('#search-bar').val().toString();
+    $(document).on('change keyup paste', '.search-bar', function(){
+        search = $(this).val().toString();
+        if(search !== lastSearch){
+            $('.search-submit').text('SEARCH');
+        }
     });
-    $(document).on('click', '#search-submit', function(){
-        if($('#search-submit').val() == 'CLEAR'){
+    $(document).on('keypress','.search-bar', function (e) {
+        if(e.which === 13 && !e.shiftKey){
+            if($('.search-submit').text() == 'CLEAR'){
+                search = '';
+                currentSearch = '';
+                $('.search-submit').text('SEARCH');
+                updatePodcastView();
+            }
+            else{
+                search = $('.search-bar').val();
+                if(search.length > 0){
+                    updatePodcastView();
+                    lastSearch = search;
+                    if(window.analytics) {
+                        gtag('event', 'search_podcasts', {
+                            "search": search
+                        });
+                    }
+                }
+            }
+        }
+    });
+    $(document).on('click', '.search-submit', function(){
+        if($('.search-submit').text() == 'CLEAR'){
             search = '';
             currentSearch = '';
-            $('#search-submit').val('SEARCH');
+            $('.search-submit').text('SEARCH');
             updatePodcastView();
         }
         else{
-            search = $('#search-bar').val();
+            search = $('.search-bar').val();
             if(search.length > 0){
                 updatePodcastView();
+                lastSearch = search;
                 if(window.analytics) {
                     gtag('event', 'search_podcasts', {
                         "search": search
@@ -1478,6 +1778,7 @@ function registerPageEvents(){
             }
         }
     });
+
     $(document).on('change', '#sort', function(){
         var newSort = $('#sort').val();
         if(sort != newSort){
@@ -1607,181 +1908,6 @@ function registerPodcastEvents(){
     });
 }
 
-// Register Comment Events
-function registerCommentEvents(){
-    // Check and Ask for Nickname
-    $(document).on('click', '.comment-input', function(){
-        if(!isLoggedIn()){
-            promptForLogin();
-        }
-    });
-    //Submit Comment
-    $(document).on('click', '.comment-submit', function(){
-        var podcast = $(this).parent().parent().parent();
-        if(podcast == null){return}
-        var podcastId = podcast.attr('id').split('-')[1];
-        var comment_input = podcast.find('.comment-input');
-        var comment_text = comment_input.html();
-        var pop = comment_input.find('.pop');
-        if(pop != undefined){
-            comment_text = comment_text.replace(pop.prop('outerHTML'), "");
-        }
-        var masterId = currentReplyId;
-        var user_id = 0;
-        if(masterId !== 0){
-            masterId = $('#' + currentReplyId).attr('masterId');
-            if(masterId == undefined){
-                masterId = 0;
-            }
-        }
-        submitComment(podcastId, user_id, comment_text, masterId, currentReplyId);
-    });
-    $(document).on('keypress','.comment-input', function (e) {
-        if(e.which === 13 && !e.shiftKey){
-            var podcast = $(this).parent().parent().parent();
-            $(this).attr("disabled", "disabled");
-            var podcastId = podcast.attr('id').split('-')[1];
-            var comment_input = podcast.find('.comment-input');
-            var comment_text = comment_input.html();
-            var pop = comment_input.find('.pop');
-            if(pop != undefined){
-                comment_text = comment_text.replace(pop.prop('outerHTML') + '&nbsp;', "");
-            }
-            var masterId = currentReplyId;
-            var user_id = 0;
-            if(masterId !== 0){
-                masterId = $('#' + currentReplyId).attr('masterId');
-                if(masterId == undefined){
-                    masterId = 0;
-                }
-            }
-            submitComment(podcastId, user_id, comment_text, masterId, currentReplyId);
-            $(this).removeAttr("disabled");
-        }
-    });
-    $(document).on('keydown', '.comment-input', function(){
-        var commentInput = $(this);
-        setTimeout(function(){
-            if(commentInput.find('.pop').length == 0){
-                currentReplyId = 0;
-            }
-        }, 500);
-    });
-    $(document).on('click', '.pop i', function(){
-        $(this).parent().remove();
-        currentReplyId = 0;
-    });
-    //When Types in Comment-Input
-    $(document).on('change keyup paste', '.comment-input', function() {
-        var totalLength = $(this).val().length;
-        var commentInputWrap = $(this).parent();
-        var podcast = commentInputWrap.parent().parent();
-        commentInputWrap.find('.comment-max-char').text(totalLength);
-        var currentVal = $(this).val().split('\n').length - navigator.userAgent.indexOf("MSIE");
-        if(totalLength > 2){
-            commentInputWrap.find('.submit').addClass('interactable');
-        }
-        else{
-            commentInputWrap.find('.submit').removeClass('interactable');
-        }
-        if(currentVal > 2 || totalLength > 35){
-            if(!podcast.hasClass('enlarge')){
-                podcast.find('.comment').addClass('enlarge');
-                podcast.find('.coms').addClass('enlarge-edit');
-                podcast.find('.comments-wrap').addClass('enlarge-edit-wrap');
-            }
-        }
-        else{
-            if(podcast.hasClass('enlarge')){
-                podcast.find('.comment').removeClass('enlarge');
-                podcast.find('.coms').removeClass('enlarge-edit');
-                podcast.find('.comments-wrap').removeClass('enlarge-edit-wrap');
-            }
-        }
-    });
-    //Like Comment
-    $(document).on('click', '.com-like', function(){
-        waLikeComment($(this).parent().parent().attr('id'));
-    });
-    //Disike Comment
-    $(document).on('click', '.com-dislike', function(){
-        waDislikeComment($(this).parent().parent().attr('id'));
-    });
-    //Extend Comments
-    $(document).on('click', '.com-comment, .com-reply', function(){
-        var comment = $(this).parent().parent();
-        var isReplyBtn = ($(this).hasClass('com-reply'));
-        if(comment != undefined){
-            var commentId = comment.attr('id');
-            var podcastId = comment.attr('podcastId');
-            var name = comment.find('.com-name').text();
-            if(comment.attr('masterId') !== '0'){
-                return;
-            }
-            if(comment.attr('extended') !== 'yes'){
-                scrollToComment(comment);
-                if(isReplyBtn){
-                    if(isLoggedIn()){
-                        enableCommentLoadBar(commentId);
-                        getCommentsSub(commentId, 5, 0);
-                    }
-                    else{
-                        promptForLogin();
-                        enableCommentLoadBar(commentId);
-                        getCommentsSub(commentId, 5, 0);
-                    }
-                }
-                else{
-                    enableCommentLoadBar(commentId);
-                    getCommentsSub(commentId, 5, 0);
-                }
-            }
-            else if(!isReplyBtn){
-                comment.attr('extended', 'no');
-                comment.find('.com-subs').text('');
-                comment.find('.com-sub-extend').hide();
-                comment.find('.com-subs').css('padding-bottom', '0');
-                comment.attr('loaded', 0);
-                comment.find('.com-subs').css('border-top','none');
-                comment.find('.com-subs').css('background','transparent');
-            }
-
-            //Extended Comment Analytic
-            //commentId podcastId name
-        }
-    });
-    //Set Reply
-    $(document).on('click', '.com-reply', function(){
-        var comment = $(this).parent().parent();
-        if(comment != null){
-            var commentId = comment.attr('id');
-            var podcastId = comment.attr('podcastId');
-            var name = comment.find('.com-name').text();
-            var color = comment.find('.com-name').css('color');
-            currentReplyId = commentId;
-            setInputPop(podcastId, name,color);
-
-            //Reply To Comment Analytic
-            //commentId podcastId name
-        }
-    });
-
-    //Sub Comment Section Extend Btn
-    $(document).on('click', '.com-sub-extend', function(){
-        console.log('clicked');
-        var com = $(this).parent().parent();
-        console.log(com.attr('loaded'));
-        if(com.attr('loaded') !== undefined) {
-            var loaded = parseInt(com.attr('loaded'));
-            console.log(loaded);
-            getCommentsSub(com.attr('id'), 5, loaded)
-        }
-    });
-
-
-
-
-}
 
 function enableScrollFading(){
     var marginTop = parseFloat($('.pod').css('margin-top'));

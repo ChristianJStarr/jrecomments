@@ -66,20 +66,20 @@ def podcast(request, id):
 ### Request Comments of PodcastId
 def comments_master(request, id, amount, offset, username=''):
     if simulated_delay > 0: sleep(simulated_delay)
-    output = {}
     comments = get_comments(id, offset, amount, username)
+    output = []
     for comment in comments:
-        output[comment.id] = comment.to_list()
+        output.append(comment.to_list())
     return JsonResponse({'comments': output})
 
 ### Request Sub Comments of CommentId
 def comments_sub(request, id, amount, offset, username=''):
     if simulated_delay > 0: sleep(simulated_delay)
-    output = {}
+    output = []
     total_comments = 0
     comments = get_sub_comments(id, offset, amount, username)
     for comment in comments:
-        output[comment.id] = comment.to_list()
+        output = comment.to_list()
     return JsonResponse({'comments_total': total_comments, 'comments': output})
 
 ### GET SPECIFIC USER DATA
@@ -109,14 +109,19 @@ def comment(request, id, parent_id=0, reply_to_id=0):
 
 # LIKE COMMENT
 def like_comment(request, id):
+    data = {'status': 'failed', 'reason':'authentication'}
     if request.user.is_authenticated:
-        id = int(id)
         comment = Comment.objects.filter(id=id).first()
-        if comment != None and add_like_to_userdata(request.user.get_username(), comment):
-            comment.likes += 1;
-            comment.save()
-            return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'failed'})
+        if comment != None:
+            if add_like_to_userdata(request.user.get_username(), comment):
+                comment.likes += 1
+                comment.save()
+                data = {'status': 'success'}
+            else:
+                data = {'status': 'failed', 'reason': 'taskfailed'}
+        else:
+            data = {'status': 'failed', 'reason': 'notfoundcomment'}
+    return JsonResponse(data)
 
 # DISLIKE COMMENT
 def dislike_comment(request, id):

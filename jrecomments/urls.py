@@ -6,10 +6,10 @@ from django.views.decorators.cache import cache_page
 
 from . import views
 
-long_expire_cache = 24 * 60 * 60 # 48 Hours
-default_expire_cache = 2 * 60 * 60 # 2 Hours
-auto_update_expire = 15
-urgent_expire_cache = 60 # 1 Minute
+long_expire_cache = 0 #24 * 60 * 60 # 48 Hours
+default_expire_cache = 0 #2 * 60 * 60 # 2 Hours
+auto_update_expire = 0 #15
+urgent_expire_cache = 0 #60 # 1 Minute
 
 urlpatterns = [
     path('', cache_page(long_expire_cache)(views.index_views), name='index'),

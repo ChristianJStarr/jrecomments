@@ -31,7 +31,7 @@
           @font-face {
                 font-family: 'jre-reg';
                 font-style: normal;
-                font-weight: regular;
+                font-weight: normal;
                 src: local('jre-reg'), url('{% static 'fonts/jre-font.woff2' %}') format('woff2');
           }
           @font-face {
@@ -48,8 +48,11 @@
 
         <!-- Javascript -->
         <script type="text/javascript">
+
+            //YEP!
             window.CSRF_TOKEN = "{{ csrf_token }}";
             window.authenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+            window.username = {% if user.is_authenticated %}"{{ user.get_username }}"{% else %}""{% endif %};
             window.analytics = {% if enable_google_analytics %}true{% else %}false{% endif %}
         </script>
         <script src="{% static 'js/jre-comments.js' %}"></script>
@@ -104,8 +107,8 @@
             <div id="main">
                 <!-- PRIMARY TOP BAR (SEARCH/SORT PODCASTS) -->
                 <div id="top-bar">
-                    <input type="text" placeholder="SEARCH PODCASTS...">
-                    <a class="search">SEARCH</a>
+                    <input class="search-bar" type="text" placeholder="SEARCH PODCASTS...">
+                    <a class="search-submit">SEARCH</a>
                     <a class="sort">MOST POPULAR</a>
                 </div>
 
