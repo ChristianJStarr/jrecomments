@@ -89,7 +89,6 @@ def update_podcast_library(fetch_all=False):
                 podcast.date = release_date
                 podcast.spotify_id = spotify_id
                 podcast.save()
-    podcaste.delete()
 
 
 def get_podcast_id(data):
