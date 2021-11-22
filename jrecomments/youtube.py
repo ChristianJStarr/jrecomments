@@ -30,11 +30,12 @@ def youtube_pull_comments(max_comments=10000):
         print('YTSCRAPER: STARTING ON #' + str(podcast.id))
 
         comments_count = Comment.objects.filter(podcast_id=podcast.id).count()
-        if comments_count > 0:
+        if comments_count > max_comments - 1000:
             print('Skipping Already Written')
             continue
 
         Comment.objects.filter(podcast_id=podcast.id).delete()
+
         max_calls = max_comments / 100
         youtube_links = get_youtube_links(podcast.id)
         if youtube_links != None:
