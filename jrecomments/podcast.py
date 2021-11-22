@@ -1,4 +1,5 @@
 import spotipy
+from MySQLdb import OperationalError
 from spotipy import SpotifyClientCredentials
 import quickle
 
@@ -66,7 +67,11 @@ def update_podcast_library(fetch_all=False):
                 duration_ms = result['duration_ms']
                 release_date = result['release_date']
                 spotify_id = result['id']
-                podcast = Podcast.objects.filter(id=id).first()
+                try:
+                    podcast = Podcast.objects.filter(id=id).first()
+                except OperationalError:
+                    podcast = None
+
                 if podcast == None:
                     podcast = Podcast()
                 elif podcast.name != name:
