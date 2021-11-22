@@ -11,10 +11,6 @@ secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
 
 # UPDATE PODCAST LIBRARY FROM SPOTIFY WEB API
 def update_podcast_library(fetch_all=False):
-    podcaste = Podcast()
-    podcaste.id = 0
-    podcaste.name = ' e'
-    podcaste.save()
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=secret_id))
     offset = 0
     print('Updating Podcast Library - Fetch All: ' + str(fetch_all))
