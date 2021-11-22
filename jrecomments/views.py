@@ -1,3 +1,4 @@
+import json
 from time import sleep
 import django.middleware.csrf
 from django.contrib.auth import login, logout
@@ -31,6 +32,36 @@ def privacy_views(request):
 def terms_views(request):
     return render(request, 'terms.html')
 # </editor-fold>
+
+def save_db_json():
+    output = {}
+    podcasts = Podcast.objects.all()
+    for podcast in podcasts:
+        if podcast.youtube_links != None:
+            output[podcast.id] = quickle.loads(podcast.youtube_links)
+
+    f = open("youtube-links.txt", "a")
+    f.write(json.dumps(output))
+    f.close()
+
+    print('saved links')
+
+
+def load_db_json():
+    output = {}
+    podcasts = Podcast.objects.all()
+    for podcast in podcasts:
+        output[podcast.id] = podcast.youtube_links
+
+    f = open("youtube-links.txt", "r")
+    data = json.loads(f.read())
+    for index in data:
+        podcast = Podcast.objects.filter(id=index).first()
+        if podcast != None:
+            podcast.youtube_links = quickle.dumps(data[index])
+            print('saved linked #' + str(index) + '     -   ' + str(data[index]))
+            podcast.save()
+
 
 # <editor-fold desc="REG PIPELINE">
 ### GET ALL PODCAST DATA

@@ -227,3 +227,4 @@ jrecomments/__pycache__/settings.cpython-39.pyc
 *.pyc
 db.sqlite3
 *.sqlite3
+jrecomments/settings.py
