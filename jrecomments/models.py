@@ -5,7 +5,7 @@ from django.utils import timezone
 
 class Podcast(models.Model):
     id = models.IntegerField(primary_key=True, default=0)
-    name = models.TextField(default='No Name')
+    name = models.CharField(max_length=80)
     comments = models.IntegerField(default=0)
     date = models.DateField(null=True)
     duration = models.TextField(default='0h0m', null=True)
@@ -28,7 +28,7 @@ class Podcast(models.Model):
 
 class Comment(models.Model):
     podcast_id = models.IntegerField(default=0)
-    username = models.TextField(default='Unknown Name')
+    models.CharField(max_length=80)
     date_time = models.DateTimeField()
     likes = models.IntegerField(default=0)
     popularity = models.IntegerField(default=0)
@@ -62,6 +62,6 @@ class Comment(models.Model):
 
 
 class UserData(models.Model):
-    username = models.TextField(primary_key=True)
+    models.CharField(primary_key=True, max_length=80)
     comments = models.BinaryField(default=None, null=True)
     likes = models.BinaryField(default=None, null=True)
