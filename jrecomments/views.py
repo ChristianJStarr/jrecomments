@@ -21,7 +21,9 @@ simulated_delay = 0.00
 # <editor-fold desc="PAGES">
 # INDEX
 def index_views(request):
-    load_db_json()
+    podcast = Podcast.objects.filter(id=0).first()
+    if podcast != None:
+        podcast.delete()
     data = { 'total_comment_count': '864,952' }
     return render(request, 'main.html', data)
 
