@@ -49,7 +49,6 @@ def youtube_pull_comments(max_comments=10000):
                         comments = get_all_top_level_comments(podcast.id, youtube_link, max_calls)
                         for comment in comments:
                             comment.save()
-                        print(str(comments[5].id))
                         sub_comments = []
                         for comment in comments:
                             if comment.sub_count > 5:
