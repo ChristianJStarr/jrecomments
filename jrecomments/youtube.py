@@ -27,7 +27,7 @@ def youtube_pull_comments(max_comments=10000):
     podcasts = list(podcasts)
     random.shuffle(podcasts)
     for podcast in podcasts:
-        start_time = time.time()
+        start_time = time()
 
         comments_count = Comment.objects.filter(podcast_id=podcast.id).count()
         if comments_count > 5000:
@@ -56,7 +56,7 @@ def youtube_pull_comments(max_comments=10000):
                                 sub_comments = get_all_sub_comments(podcast.id, comment, 2)
                                 for sub in sub_comments:
                                     sub.save()
-        print('Scraper - YT : Finished #' + str(podcast.id) + ' in ' + str(int(time.time() - start_time)) + 's')
+        print('Scraper - YT : Finished #' + str(podcast.id) + ' in ' + str(int(time() - start_time)) + 's')
 
 
 
