@@ -1,6 +1,6 @@
 import random
 from itertools import islice
-from time import sleep
+from time import sleep, time
 
 from django.db import transaction
 from googleapiclient.discovery import build
@@ -27,12 +27,14 @@ def youtube_pull_comments(max_comments=10000):
     podcasts = list(podcasts)
     random.shuffle(podcasts)
     for podcast in podcasts:
-        print('YTSCRAPER: STARTING ON #' + str(podcast.id))
+        start_time = time.time()
 
         comments_count = Comment.objects.filter(podcast_id=podcast.id).count()
-        if comments_count > max_comments - 1000:
-            print('Skipping Already Written')
+        if comments_count > 5000:
+            print('Scraper - YT : Skipping #' + str(podcast.id))
             continue
+
+        print('Scraper - YT : Started #' + str(podcast.id))
 
         Comment.objects.filter(podcast_id=podcast.id).delete()
 
@@ -45,20 +47,16 @@ def youtube_pull_comments(max_comments=10000):
                 for youtube_link in youtube_links:
                     if youtube_link_valid(podcast, youtube_link):
                         comments = get_all_top_level_comments(podcast.id, youtube_link, max_calls)
-                        print('YTSCRAPER: Pulled TopLevel #' + str(podcast.id) + ' : ' + str(len(comments)))
                         for comment in comments:
                             comment.save()
-                        print('YTSCRAPER: Saved TopLevel #' + str(podcast.id))
                         print(str(comments[5].id))
                         sub_comments = []
                         for comment in comments:
                             if comment.sub_count > 5:
                                 sub_comments = get_all_sub_comments(podcast.id, comment, 2)
-                                print('YTSCRAPER: Pulled SubLevel #' + str(podcast.id) + ' : ' + str(
-                                    len(sub_comments)))
                                 for sub in sub_comments:
                                     sub.save()
-                        print('YTSCRAPER: SavedSubs')
+        print('Scraper - YT : Finished #' + str(podcast.id) + ' in ' + str(int(time.time() - start_time)) + 's')
 
 
 
