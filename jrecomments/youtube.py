@@ -37,7 +37,7 @@ def youtube_pull_comments(max_comments=10000):
         print('Scraper - YT : Started #' + str(podcast.id))
 
         Comment.objects.filter(podcast_id=podcast.id).delete()
-
+        total_comments = 0
         max_calls = max_comments / 100
         youtube_links = get_youtube_links(podcast.id)
         if youtube_links != None:
@@ -49,13 +49,15 @@ def youtube_pull_comments(max_comments=10000):
                         comments = get_all_top_level_comments(podcast.id, youtube_link, max_calls)
                         for comment in comments:
                             comment.save()
+                            total_comments += 1
                         sub_comments = []
                         for comment in comments:
                             if comment.sub_count > 5:
                                 sub_comments = get_all_sub_comments(podcast.id, comment, 2)
                                 for sub in sub_comments:
                                     sub.save()
-        print('Scraper - YT : Finished #' + str(podcast.id) + ' in ' + str(int(time() - start_time)) + 's')
+                                    total_comments += 1
+        print('Scraper - YT : Finished #' + str(podcast.id) + ' in ' + str(int(time() - start_time)) + 's ' + str(total_comments) + 'c')
 
 
 
