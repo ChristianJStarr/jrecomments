@@ -1,4 +1,4 @@
-from jrecomments.models import UserData
+#from jrecomments.models import UserData
 import quickle
 
 

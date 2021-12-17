@@ -9,7 +9,7 @@ from django.shortcuts import render
 from django.utils.datastructures import MultiValueDictKeyError
 import quickle
 from jrecomments.comment import create_comment, get_comments, get_sub_comments
-from jrecomments.models import Podcast, Comment, UserData
+from jrecomments.models import Podcast, Comment#UserData
 from jrecomments.podcast import podcast_to_list, update_podcast_library
 from jrecomments.userdata import add_like_to_userdata, remove_like_from_userdata, get_podcast_data_for_user
 from jrecomments.youtube import youtube_pull_comments

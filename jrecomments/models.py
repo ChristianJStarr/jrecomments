@@ -61,7 +61,3 @@ class Comment(models.Model):
                 'subCount': self.sub_count}
 
 
-class UserData(models.Model):
-    username = models.CharField(max_length=80, default='')
-    comments = models.BinaryField(default=None, null=True)
-    likes = models.BinaryField(default=None, null=True)
