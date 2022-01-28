@@ -48,15 +48,12 @@
 
         <!-- Javascript -->
         <script type="text/javascript">
-
-            //YEP!
             window.CSRF_TOKEN = "{{ csrf_token }}";
             window.authenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
             window.username = {% if user.is_authenticated %}"{{ user.get_username }}"{% else %}""{% endif %};
             window.analytics = {% if enable_google_analytics %}true{% else %}false{% endif %}
         </script>
         <script src="{% static 'js/jre-comments.js' %}"></script>
-        <script src="{% static 'js/podcast.js' %}"></script>
 
         <!-- Google Analytics -->
         {% if enable_google_analytics %}
@@ -98,7 +95,7 @@
             <!-- PARTICLES LAYER -->
             <div id="particle"></div>
             <script>
-                    particlesJS.load('particle', '{% static 'particlesjs-config.json' %}', function() {
+                    particlesJS.load('particle', '{% static 'config/particlesjs-config.json' %}', function() {
 
                     });
             </script>
