@@ -199,7 +199,7 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
+jrecomments/.env
 .venv
 env/
 venv/
