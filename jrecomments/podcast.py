@@ -2,11 +2,17 @@ import spotipy
 import quickle
 from spotipy import SpotifyClientCredentials
 from jrecomments.models import Podcast, Comment
+import environ
+
+
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env()
 
 
 yt_channel_id = '4rOoJ6Egrf8K2IrywzwOMk'
-client_id = '9f4f9e03f82d4d469df810cdf54442e9'
-secret_id = 'da50b3c94c1447fca5496e144ed8ab9a'
+client_id = env('YT_ID')
+secret_id = env('YT_SECRET')
 
 
 # UPDATE PODCAST LIBRARY FROM SPOTIFY WEB API
@@ -135,3 +141,4 @@ def try_int(value):
         return int(value)
     except ValueError:
         return 0
+

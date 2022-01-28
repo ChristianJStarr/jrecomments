@@ -1,22 +1,23 @@
 import random
-from itertools import islice
 from time import sleep, time
-
-from django.db import transaction
 from googleapiclient.discovery import build
 import urllib.request
 import json
 import quickle
 from googleapiclient.errors import HttpError
-
-from jrecomments.comment import bulk_create_comments
 from jrecomments.models import Comment, Podcast
+import environ
 
 
-#api_key = 'AIzaSyCiQ7ITLaTYEWp7S6-TgGfLxKANU-AIYfI'
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env()
 
-api_key = 'AIzaSyAu8N6583jvHYPAGJMVnvG9mC7ce-jPqxA'
-chanel_id = 'UCzQUP1qoWDoEbmsQxvdjxgQ'
+
+
+chanel_id = env('YT_ID')
+api_key = env('YT_SECRET')
+#api_key = env('YT_SECRET_ALT')
 
 com_cache = {}
 
